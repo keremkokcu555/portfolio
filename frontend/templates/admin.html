@@ -216,12 +216,14 @@
               <input name="profile_photo_file" type="file" accept="image/png, image/jpeg, image/jpg, image/webp" />
               <input name="profile_photo" type="hidden" />
               <div id="preview-profile_photo" style="margin-top: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+              <button type="button" id="delete-profile-photo-btn" onclick="deleteProfilePhoto()" style="display:none; margin-top: 8px; background: transparent; border: 1px solid #f87171; color: #f87171; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82em; transition: background 0.2s, color 0.2s;" onmouseover="this.style.background='#f87171';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='#f87171'">🗑 Profil Fotoğrafını Sil</button>
             </div>
             <div class="field-row full-width">
               <label>CV Seç (PDF, Değiştirmek istemiyorsanız boş bırakın)</label>
               <input name="cv_pdf_file" type="file" accept="application/pdf" />
               <input name="cv_pdf" type="hidden" />
               <div id="preview-cv_pdf" style="margin-top: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+              <button type="button" id="delete-cv-pdf-btn" onclick="deleteFile('profile', null, 'cv_pdf', 'preview-cv_pdf', 'delete-cv-pdf-btn')" style="display:none; margin-top: 8px; background: transparent; border: 1px solid #f87171; color: #f87171; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82em; transition: background 0.2s, color 0.2s;" onmouseover="this.style.background='#f87171';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='#f87171'">🗑 CV'yi Sil</button>
             </div>
             <button type="submit" class="primary">Kaydet</button>
           </form>
@@ -293,6 +295,7 @@
                 <input name="certificate_link_file" type="file" accept="application/pdf, image/png, image/jpeg, image/jpg, image/webp" />
                 <input name="certificate_link" type="hidden" />
                 <div id="preview-courses-certificate_link" style="margin-bottom: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+                <button type="button" id="delete-courses-certificate_link-btn" style="display:none; margin-bottom: 8px; background: transparent; border: 1px solid #f87171; color: #f87171; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82em; transition: background 0.2s, color 0.2s;" onmouseover="this.style.background='#f87171';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='#f87171'" onclick="deleteFile('courses', document.getElementById('courses-form').querySelector('[name=id]').value, 'certificate_link', 'preview-courses-certificate_link', 'delete-courses-certificate_link-btn')">🗑 Sertifika Dosyasını Sil</button>
               </div>
               <div class="field-row full-width">
                 <label>Açıklama</label>
@@ -328,12 +331,14 @@
                 <input name="image_file" type="file" accept="image/png, image/jpeg, image/jpg, image/webp" />
                 <input name="image" type="hidden" />
                 <div id="preview-certificates-image" style="margin-bottom: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+                <button type="button" id="delete-certificates-image-btn" style="display:none; margin-bottom: 8px; background: transparent; border: 1px solid #f87171; color: #f87171; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82em; transition: background 0.2s, color 0.2s;" onmouseover="this.style.background='#f87171';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='#f87171'" onclick="deleteFile('certificates', document.getElementById('certificates-form').querySelector('[name=id]').value, 'image', 'preview-certificates-image', 'delete-certificates-image-btn')">🗑 Sertifika Görselini Sil</button>
               </div>
               <div class="field-row full-width">
                 <label>Sertifika PDF Dosyası (İsteğe Bağlı)</label>
                 <input name="pdf_file" type="file" accept="application/pdf" />
                 <input name="pdf" type="hidden" />
                 <div id="preview-certificates-pdf" style="margin-bottom: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+                <button type="button" id="delete-certificates-pdf-btn" style="display:none; margin-bottom: 8px; background: transparent; border: 1px solid #f87171; color: #f87171; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82em; transition: background 0.2s, color 0.2s;" onmouseover="this.style.background='#f87171';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='#f87171'" onclick="deleteFile('certificates', document.getElementById('certificates-form').querySelector('[name=id]').value, 'pdf', 'preview-certificates-pdf', 'delete-certificates-pdf-btn')">🗑 Sertifika PDF'ini Sil</button>
               </div>
               <div class="field-row full-width">
                 <label>Açıklama</label>
@@ -411,6 +416,7 @@
                 <input name="image_file" type="file" accept="image/png, image/jpeg, image/jpg, image/webp" />
                 <input name="image" type="hidden" />
                 <div id="preview-projects-image" style="margin-bottom: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+                <button type="button" id="delete-projects-image-btn" style="display:none; margin-bottom: 8px; background: transparent; border: 1px solid #f87171; color: #f87171; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82em; transition: background 0.2s, color 0.2s;" onmouseover="this.style.background='#f87171';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='#f87171'" onclick="deleteFile('projects', document.getElementById('projects-form').querySelector('[name=id]').value, 'image', 'preview-projects-image', 'delete-projects-image-btn')">🗑 Proje Görselini Sil</button>
               </div>
               <button type="submit" class="primary">Kaydet</button>
             </form>

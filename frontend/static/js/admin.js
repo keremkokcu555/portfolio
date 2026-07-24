@@ -151,19 +151,81 @@ const uploadFile = async (file, type = 'misc') => {
   return data.url;
 };
 
+// Map: previewId → delete button ID
+const PREVIEW_DELETE_BTN_MAP = {
+  'preview-profile_photo':             'delete-profile-photo-btn',
+  'preview-cv_pdf':                    'delete-cv-pdf-btn',
+  'preview-courses-certificate_link':  'delete-courses-certificate_link-btn',
+  'preview-certificates-image':        'delete-certificates-image-btn',
+  'preview-certificates-pdf':          'delete-certificates-pdf-btn',
+  'preview-projects-image':            'delete-projects-image-btn',
+};
+
 const updatePreview = (containerId, url) => {
   const container = document.getElementById(containerId);
   if (!container) return;
+  const btnId = PREVIEW_DELETE_BTN_MAP[containerId];
+  const deleteBtn = btnId ? document.getElementById(btnId) : null;
   if (!url) {
     container.innerHTML = '';
+    if (deleteBtn) deleteBtn.style.display = 'none';
     return;
   }
-  if (url.endsWith('.pdf')) {
+  if (url.toLowerCase().endsWith('.pdf')) {
     container.innerHTML = `<a href="${url}" target="_blank" style="color: #a5b4fc; text-decoration: underline;">Mevcut PDF Dosyasını Görüntüle</a>`;
   } else {
     container.innerHTML = `<img src="${url}" style="max-height: 80px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);" alt="Önizleme">`;
   }
+  if (deleteBtn) deleteBtn.style.display = 'inline-block';
 };
+
+// Genel dosya silme fonksiyonu (tüm upload alanları için)
+const deleteFile = async (table, itemId, field, previewId, btnId) => {
+  if (!confirm('Bu dosyayı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.')) return;
+  const btn = btnId ? document.getElementById(btnId) : null;
+  const oldText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.textContent = 'Siliniyor...'; }
+  try {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = meta ? meta.getAttribute('content') : '';
+    const body = { table, field };
+    if (itemId) body.id = Number(itemId);
+    const res = await fetch('/api/file', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify(body)
+    });
+    if (res.status === 401) { window.location.href = '/admin/login'; return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Silme başarısız');
+    }
+    // Önizlemeyi temizle, butonu gizle
+    updatePreview(previewId, '');
+    // İlgili gizli input'u temizle (form yeniden kaydedilirse eski path gitmesin)
+    const form = btn ? btn.closest('form') : profileForm;
+    if (form) {
+      const hiddenInput = form.querySelector(`input[name="${field}"]`);
+      if (hiddenInput) hiddenInput.value = '';
+    }
+    // Başarı bildirimi
+    const successMsg = document.createElement('span');
+    successMsg.textContent = ' ✓ Silindi';
+    successMsg.style.cssText = 'color:#4ade80; font-size:0.82em; margin-left:8px;';
+    if (btn && btn.parentNode) {
+      btn.parentNode.insertBefore(successMsg, btn.nextSibling);
+      setTimeout(() => successMsg.remove(), 3000);
+    }
+  } catch (error) {
+    alert('Hata: ' + error.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = oldText; }
+  }
+};
+
+// Geriye dönük uyumluluk: profil fotoğrafı sil butonu eski onclick'i desteklemek için
+const deleteProfilePhoto = () => deleteFile('profile', null, 'profile_photo', 'preview-profile_photo', 'delete-profile-photo-btn');
+
 
 const loadData = async () => {
   if (!profileForm) {
@@ -263,7 +325,9 @@ window.openMessage = async (id, element) => {
   
   if (!msg.is_read) {
     try {
-      await fetch(`${apiBase}/messages/${id}/read`, { method: 'PATCH' });
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      const csrfToken = meta ? meta.getAttribute('content') : '';
+      await fetch(`${apiBase}/messages/${id}/read`, { method: 'PATCH', headers: { 'X-CSRFToken': csrfToken } });
       await loadMessages();
       await updateDashboardCounts();
     } catch (e) { console.error('Okundu isaretlenemedi', e); }

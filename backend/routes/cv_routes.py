@@ -135,3 +135,111 @@ def upload_file():
         
     return jsonify({'error': 'Invalid file type'}), 400
 
+
+# ── Genel Dosya Silme Endpoint'i ─────────────────────────────────
+# DELETE /api/file  body: { "table": "...", "id": ..., "field": "..." }
+# profile tablosu için id göndermeye gerek yok (her zaman id=1).
+# Desteklenen tablo/alan kombinasyonları:
+#   profile       → profile_photo, cv_pdf
+#   certificates  → image, pdf
+#   projects      → image
+#   courses       → certificate_link
+
+ALLOWED_FILE_FIELDS = {
+    'profile':      {'profile_photo': '/static/uploads/profile/',
+                     'cv_pdf':        '/static/uploads/cv/'},
+    'certificates': {'image': '/static/uploads/certificates/',
+                     'pdf':   '/static/uploads/certificates/'},
+    'projects':     {'image': '/static/uploads/projects/'},
+    'courses':      {'certificate_link': '/static/uploads/certificates/'},
+}
+
+@cv_bp.route('/api/file', methods=['DELETE'])
+@admin_required
+def delete_file():
+    try:
+        from services.db import get_db
+        data = request.get_json() or {}
+        table = data.get('table', '').strip()
+        field = data.get('field', '').strip()
+        item_id = data.get('id')
+
+        # Whitelist kontrolü
+        if table not in ALLOWED_FILE_FIELDS:
+            return jsonify({'error': 'Geçersiz tablo'}), 400
+        if field not in ALLOWED_FILE_FIELDS[table]:
+            return jsonify({'error': 'Geçersiz alan'}), 400
+
+        allowed_prefix = ALLOWED_FILE_FIELDS[table][field]
+        db = get_db()
+
+        # Kaydı çek
+        if table == 'profile':
+            row = db.execute(f'SELECT {field} FROM profile WHERE id = 1').fetchone()
+        else:
+            if not item_id:
+                return jsonify({'error': 'id zorunludur'}), 400
+            row = db.execute(f'SELECT {field} FROM {table} WHERE id = ?', (item_id,)).fetchone()
+
+        if not row or not row[field]:
+            return jsonify({'error': 'Dosya bulunamadı'}), 404
+
+        old_path = row[field]
+
+        # Güvenlik: sadece beklenen upload alt klasörüne ait dosyaları sil
+        if not old_path.startswith(allowed_prefix):
+            return jsonify({'error': 'Geçersiz dosya yolu'}), 400
+
+        # DB alanını temizle
+        if table == 'profile':
+            db.execute(f"UPDATE profile SET {field} = '', last_updated = datetime('now', 'localtime') WHERE id = 1")
+        else:
+            db.execute(f"UPDATE {table} SET {field} = NULL WHERE id = ?", (item_id,))
+        db.commit()
+
+        # Fiziksel dosyayı sil (DB'den kaldırıldıktan sonra — tutarlılık garantili)
+        filename = old_path.split('/static/uploads/')[-1]
+        if '..' not in filename and not filename.startswith('/') and not filename.startswith('\\'):
+            full_path = os.path.join(UPLOAD_FOLDER, filename)
+            if os.path.exists(full_path):
+                try:
+                    os.remove(full_path)
+                except Exception:
+                    pass  # Dosya silinemese de DB zaten temizlendi
+
+        return jsonify({'success': True})
+
+    except Exception:
+        return jsonify({'error': 'Silme işlemi sırasında hata oluştu'}), 500
+
+
+# Geriye dönük uyumluluk: eski /api/profile/photo endpoint'ini yeni genel endpoint'e yönlendir
+@cv_bp.route('/api/profile/photo', methods=['DELETE'])
+@admin_required
+def delete_profile_photo():
+    from flask import current_app
+    with current_app.test_request_context():
+        pass
+    # Delegate to general handler via internal logic
+    try:
+        from services.db import get_db
+        db = get_db()
+        row = db.execute('SELECT profile_photo FROM profile WHERE id = 1').fetchone()
+        if not row or not row['profile_photo']:
+            return jsonify({'error': 'Profil fotoğrafı bulunamadı'}), 404
+        old_path = row['profile_photo']
+        if not old_path.startswith('/static/uploads/profile/'):
+            return jsonify({'error': 'Geçersiz dosya yolu'}), 400
+        db.execute("UPDATE profile SET profile_photo = '', last_updated = datetime('now', 'localtime') WHERE id = 1")
+        db.commit()
+        filename = old_path.split('/static/uploads/')[-1]
+        if '..' not in filename and not filename.startswith('/') and not filename.startswith('\\'):
+            full_path = os.path.join(UPLOAD_FOLDER, filename)
+            if os.path.exists(full_path):
+                try:
+                    os.remove(full_path)
+                except Exception:
+                    pass
+        return jsonify({'success': True})
+    except Exception:
+        return jsonify({'error': 'Silme işlemi sırasında hata oluştu'}), 500
