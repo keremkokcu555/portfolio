@@ -1,0 +1,33 @@
+# Environments
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Database
+backend/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads
+frontend/static/uploads/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+*.log

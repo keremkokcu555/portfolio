@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portföy Kontrol Paneli</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link rel="stylesheet" href="/static/css/style.css?v=1784850000" />
+  
+</head>
+<body class="home-active ">
+  <div class="page-shell">
+    <div class="background-layer"></div>
+
+    <header class="top-navbar">
+      <div class="navbar-inner">
+        <div class="brand">Portföy Yönetimi</div>
+        <button class="navbar-toggle" aria-label="Menüyü aç">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <nav class="top-nav">
+          <ul class="nav-list">
+            <li class="nav-item"><button class="nav-link" data-target="profile">Profil</button></li>
+            <li class="nav-item"><button class="nav-link" data-target="education">Eğitim</button></li>
+            <li class="nav-item"><button class="nav-link" data-target="courses">Kurslar</button></li>
+            <li class="nav-item"><button class="nav-link" data-target="certificates">Sertifikalar</button></li>
+            <li class="nav-item"><button class="nav-link" data-target="experiences">Deneyimler</button></li>
+            <li class="nav-item"><button class="nav-link" data-target="projects">Projeler</button></li>
+            <li class="nav-item"><button class="nav-link" data-target="skills">Yetenekler</button></li>
+            <li class="nav-item"><button class="nav-link" data-target="languages">Diller</button></li>
+            <li class="nav-item"><button class="nav-link" data-target="messages">Gelen Mesajlar <span id="nav-unread-badge" style="display:none; background:#ef4444; color:white; border-radius:50%; padding:2px 6px; font-size:12px; margin-left:5px;">0</span></button></li>
+            
+            <li class="nav-item"><button id="logout-btn" class="nav-link" style="color: #ef4444;">Çıkış Yap</button></li>
+            
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    
+
+    <main class="content-wrapper">
+      <section class="main-panel">
+        <section id="home" class="tab-content active">
+
+          <!-- Karşılama -->
+          <div class="db-welcome">
+            <div class="db-welcome-text">
+              <h1 class="db-title">Hoş Geldiniz, Kerem</h1>
+              <p class="db-subtitle">Portföyünüzün genel durumunu buradan takip edebilirsiniz.</p>
+            </div>
+            <a href="/" target="_blank" class="db-view-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Portföyü Görüntüle
+            </a>
+          </div>
+
+          <!-- İstatistik Kartları -->
+          <div class="db-stats-grid">
+            <div class="db-stat-card" data-category="messages" style="cursor:pointer" onclick="activateTab('messages')">
+              <div class="db-stat-icon" style="position: relative;">
+                ✉️
+                <span id="dashboard-unread-badge" style="display:none; position:absolute; top:-5px; right:-10px; background:#ef4444; color:white; border-radius:50%; padding:2px 6px; font-size:12px;">0</span>
+              </div>
+              <div class="db-stat-count db-count" data-key="messages">—</div>
+              <div class="db-stat-label">Mesajlar</div>
+            </div>
+            <div class="db-stat-card" data-category="projects" style="cursor:pointer" onclick="activateTab('projects')">
+              <div class="db-stat-icon">📁</div>
+              <div class="db-stat-count db-count" data-key="projects">—</div>
+              <div class="db-stat-label">Projeler</div>
+            </div>
+            <div class="db-stat-card" data-category="education" style="cursor:pointer" onclick="activateTab('education')">
+              <div class="db-stat-icon">🎓</div>
+              <div class="db-stat-count db-count" data-key="education">—</div>
+              <div class="db-stat-label">Eğitimler</div>
+            </div>
+            <div class="db-stat-card" data-category="experiences" style="cursor:pointer" onclick="activateTab('experiences')">
+              <div class="db-stat-icon">💼</div>
+              <div class="db-stat-count db-count" data-key="experiences">—</div>
+              <div class="db-stat-label">Deneyimler</div>
+            </div>
+            <div class="db-stat-card" data-category="skills" style="cursor:pointer" onclick="activateTab('skills')">
+              <div class="db-stat-icon">⚡</div>
+              <div class="db-stat-count db-count" data-key="skills">—</div>
+              <div class="db-stat-label">Yetenekler</div>
+            </div>
+            <div class="db-stat-card" data-category="certificates" style="cursor:pointer" onclick="activateTab('certificates')">
+              <div class="db-stat-icon">🏆</div>
+              <div class="db-stat-count db-count" data-key="certificates">—</div>
+              <div class="db-stat-label">Sertifikalar</div>
+            </div>
+            <div class="db-stat-card" data-category="courses" style="cursor:pointer" onclick="activateTab('courses')">
+              <div class="db-stat-icon">📚</div>
+              <div class="db-stat-count db-count" data-key="courses">—</div>
+              <div class="db-stat-label">Kurslar</div>
+            </div>
+            <div class="db-stat-card" data-category="languages" style="cursor:pointer" onclick="activateTab('languages')">
+              <div class="db-stat-icon">🌐</div>
+              <div class="db-stat-count db-count" data-key="languages">—</div>
+              <div class="db-stat-label">Diller</div>
+            </div>
+          </div>
+
+          <!-- Alt iki sütun -->
+          <div class="db-bottom-grid">
+
+            <!-- Hızlı İşlemler -->
+            <div class="db-panel">
+              <h3 class="db-panel-title">Hızlı İşlemler</h3>
+              <div class="db-quick-actions">
+                <button class="db-quick-btn" onclick="activateTab('projects'); document.getElementById('projects-form')?.scrollIntoView({behavior:'smooth'})">
+                  <span>＋</span> Proje Ekle
+                </button>
+                <button class="db-quick-btn" onclick="activateTab('education'); document.getElementById('education-form')?.scrollIntoView({behavior:'smooth'})">
+                  <span>＋</span> Eğitim Ekle
+                </button>
+                <button class="db-quick-btn" onclick="activateTab('certificates'); document.getElementById('certificates-form')?.scrollIntoView({behavior:'smooth'})">
+                  <span>＋</span> Sertifika Ekle
+                </button>
+                <button class="db-quick-btn" onclick="activateTab('experiences'); document.getElementById('experiences-form')?.scrollIntoView({behavior:'smooth'})">
+                  <span>＋</span> Deneyim Ekle
+                </button>
+              </div>
+            </div>
+
+            <!-- Portföy Durumu -->
+            <div class="db-panel">
+              <h3 class="db-panel-title">Portföy Durumu</h3>
+              <div id="db-status-list" class="db-status-list">
+                <div class="db-status-row">
+                  <span class="db-status-label">Profil bilgileri</span>
+                  <span class="db-status-val db-status-check">—</span>
+                </div>
+                <div class="db-status-row">
+                  <span class="db-status-label">Eğitim</span>
+                  <span class="db-status-val db-count-status" data-key="education">—</span>
+                </div>
+                <div class="db-status-row">
+                  <span class="db-status-label">Projeler</span>
+                  <span class="db-status-val db-count-status" data-key="projects">—</span>
+                </div>
+                <div class="db-status-row">
+                  <span class="db-status-label">Yetenekler</span>
+                  <span class="db-status-val db-count-status" data-key="skills">—</span>
+                </div>
+                <div class="db-status-row">
+                  <span class="db-status-label">Sertifikalar</span>
+                  <span class="db-status-val db-count-status" data-key="certificates">—</span>
+                </div>
+                <div class="db-status-row">
+                  <span class="db-status-label">Deneyimler</span>
+                  <span class="db-status-val db-count-status" data-key="experiences">—</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Son Eklenenler -->
+            <div class="db-panel db-panel-full">
+              <h3 class="db-panel-title">Son Eklenenler</h3>
+              <div id="db-recent-list" class="db-recent-list">
+                <div class="db-recent-loading">Yükleniyor...</div>
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+        <section id="profile" class="tab-content card">
+          <h2>Profil</h2>
+          <form id="profile-form" class="data-form">
+            <div class="field-row">
+              <label>Ad Soyad</label>
+              <input name="name" type="text" placeholder="Ad Soyad" />
+              <label>Unvan</label>
+              <input name="title" type="text" placeholder="Unvan" />
+            </div>
+            <div class="field-row">
+              <label>E-posta</label>
+              <input name="email" type="email" placeholder="E-posta" />
+              <label>Telefon</label>
+              <input name="phone" type="text" placeholder="Telefon" />
+            </div>
+            <div class="field-row">
+              <label>Şehir</label>
+              <input name="city" type="text" placeholder="Şehir" />
+              <label>Adres</label>
+              <input name="address" type="text" placeholder="Adres" />
+            </div>
+            <div class="field-row">
+              <label>Website</label>
+              <input name="website" type="text" placeholder="Website" />
+              <label>GitHub</label>
+              <input name="github" type="text" placeholder="GitHub" />
+            </div>
+            <div class="field-row">
+              <label>LinkedIn</label>
+              <input name="linkedin" type="text" placeholder="LinkedIn" />
+              <label>Instagram</label>
+              <input name="instagram" type="text" placeholder="Instagram" />
+            </div>
+            <div class="field-row">
+              <label>X</label>
+              <input name="x" type="text" placeholder="X" />
+              <label>YouTube</label>
+              <input name="youtube" type="text" placeholder="YouTube" />
+            </div>
+            <div class="field-row full-width">
+              <label>Hakkımda</label>
+              <textarea name="summary" rows="4" placeholder="Hakkınızda kısa bir açıklama"></textarea>
+            </div>
+            <div class="field-row full-width">
+              <label>Profil Fotoğrafı Seç (Değiştirmek istemiyorsanız boş bırakın)</label>
+              <input name="profile_photo_file" type="file" accept="image/png, image/jpeg, image/jpg, image/webp" />
+              <input name="profile_photo" type="hidden" />
+              <div id="preview-profile_photo" style="margin-top: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+            </div>
+            <div class="field-row full-width">
+              <label>CV Seç (PDF, Değiştirmek istemiyorsanız boş bırakın)</label>
+              <input name="cv_pdf_file" type="file" accept="application/pdf" />
+              <input name="cv_pdf" type="hidden" />
+              <div id="preview-cv_pdf" style="margin-top: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+            </div>
+            <button type="submit" class="primary">Kaydet</button>
+          </form>
+        </section>
+
+        <section id="education" class="tab-content card">
+          <h2>Eğitim</h2>
+          <div class="tab-description">Okul bilgilerini, bölüm bilgisini ve eğitim sürecini ekleyip düzenleyebilirsin.</div>
+          <div class="tab-row">
+            <form id="education-form" class="data-form">
+              <input name="id" type="hidden" />
+              <div class="field-row">
+                <label>Okul</label>
+                <input name="school" type="text" placeholder="Okul" required />
+                <label>Bölüm</label>
+                <input name="department" type="text" placeholder="Bölüm" />
+              </div>
+              <div class="field-row">
+                <label>Seviye</label>
+                <input name="level" type="text" placeholder="Lisans / Yüksek Lisans" />
+                <label>Başlangıç Tarihi</label>
+                <input name="start_date" type="date" />
+              </div>
+              <div class="field-row">
+                <label>Bitiş Tarihi</label>
+                <input name="end_date" type="date" />
+                <label>Ortalama</label>
+                <input name="gpa" type="text" placeholder="Ortalama" />
+              </div>
+              <div class="field-row full-width">
+                <label><input name="ongoing" type="checkbox" /> Devam ediyor</label>
+              </div>
+              <div class="field-row full-width">
+                <label>Açıklama</label>
+                <textarea name="description" rows="3" placeholder="Açıklama"></textarea>
+              </div>
+              <button type="submit" class="primary">Kaydet</button>
+            </form>
+            <div class="list-card card">
+              <h3>Mevcut Eğitimler</h3>
+              <div id="education-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="courses" class="tab-content card">
+          <h2>Kurslar</h2>
+          <div class="tab-description">Kurs adını, bitiş bilgisini ve sertifika bilgilerini ekleyebilirsin.</div>
+          <div class="tab-row">
+            <form id="courses-form" class="data-form">
+              <input name="id" type="hidden" />
+              <div class="field-row">
+                <label>Kurs Adı</label>
+                <input name="title" type="text" placeholder="Kurs Adı" required />
+                <label>Kurum</label>
+                <input name="organization" type="text" placeholder="Kurum" />
+              </div>
+              <div class="field-row">
+                <label>Başlangıç Tarihi</label>
+                <input name="start_date" type="date" />
+                <label>Bitiş Tarihi</label>
+                <input name="end_date" type="date" />
+              </div>
+              <div class="field-row full-width">
+                <label><input name="certificate" type="checkbox" /> Sertifika var mı?</label>
+              </div>
+              <div class="field-row full-width">
+                <label>Sertifika Dosyası</label>
+                <input name="certificate_link_file" type="file" accept="application/pdf, image/png, image/jpeg, image/jpg, image/webp" />
+                <input name="certificate_link" type="hidden" />
+                <div id="preview-courses-certificate_link" style="margin-bottom: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+              </div>
+              <div class="field-row full-width">
+                <label>Açıklama</label>
+                <textarea name="description" rows="3" placeholder="Açıklama"></textarea>
+              </div>
+              <button type="submit" class="primary">Kaydet</button>
+            </form>
+            <div class="list-card card">
+              <h3>Mevcut Kurslar</h3>
+              <div id="courses-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="certificates" class="tab-content card">
+          <h2>Sertifikalar</h2>
+          <div class="tab-description">Sertifika adını, kurum bilgilerini ve görsel / PDF bağlantılarını ekleyebilirsin.</div>
+          <div class="tab-row">
+            <form id="certificates-form" class="data-form">
+              <input name="id" type="hidden" />
+              <div class="field-row">
+                <label>Sertifika Adı</label>
+                <input name="name" type="text" placeholder="Sertifika Adı" required />
+                <label>Kurum</label>
+                <input name="organization" type="text" placeholder="Kurum" />
+              </div>
+              <div class="field-row">
+                <label>Tarih</label>
+                <input name="date" type="date" />
+              </div>
+              <div class="field-row full-width">
+                <label>Sertifika Görseli (İsteğe Bağlı)</label>
+                <input name="image_file" type="file" accept="image/png, image/jpeg, image/jpg, image/webp" />
+                <input name="image" type="hidden" />
+                <div id="preview-certificates-image" style="margin-bottom: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+              </div>
+              <div class="field-row full-width">
+                <label>Sertifika PDF Dosyası (İsteğe Bağlı)</label>
+                <input name="pdf_file" type="file" accept="application/pdf" />
+                <input name="pdf" type="hidden" />
+                <div id="preview-certificates-pdf" style="margin-bottom: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+              </div>
+              <div class="field-row full-width">
+                <label>Açıklama</label>
+                <textarea name="description" rows="3" placeholder="Açıklama"></textarea>
+              </div>
+              <button type="submit" class="primary">Kaydet</button>
+            </form>
+            <div class="list-card card">
+              <h3>Mevcut Sertifikalar</h3>
+              <div id="certificates-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="experiences" class="tab-content card">
+          <h2>Deneyimler</h2>
+          <div class="tab-description">Firma ve pozisyon bilgilerini buradan yöneteceksin.</div>
+          <div class="tab-row">
+            <form id="experiences-form" class="data-form">
+              <input name="id" type="hidden" />
+              <div class="field-row">
+                <label>Firma</label>
+                <input name="company" type="text" placeholder="Firma" required />
+                <label>Pozisyon</label>
+                <input name="position" type="text" placeholder="Pozisyon" />
+              </div>
+              <div class="field-row">
+                <label>Başlangıç Tarihi</label>
+                <input name="start_date" type="date" />
+                <label>Bitiş Tarihi</label>
+                <input name="end_date" type="date" />
+              </div>
+              <div class="field-row full-width">
+                <label><input name="ongoing" type="checkbox" /> Devam ediyor</label>
+              </div>
+              <div class="field-row full-width">
+                <label>Açıklama</label>
+                <textarea name="description" rows="3" placeholder="Açıklama"></textarea>
+              </div>
+              <button type="submit" class="primary">Kaydet</button>
+            </form>
+            <div class="list-card card">
+              <h3>Mevcut Deneyimler</h3>
+              <div id="experiences-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="projects" class="tab-content card">
+          <h2>Projeler</h2>
+          <div class="tab-description">Proje bilgilerini, teknolojileri ve canlı demo linklerini ekle.</div>
+          <div class="tab-row">
+            <form id="projects-form" class="data-form">
+              <input name="id" type="hidden" />
+              <div class="field-row full-width">
+                <label>Proje Adı</label>
+                <input name="title" type="text" placeholder="Proje Adı" required />
+              </div>
+              <div class="field-row full-width">
+                <label>Açıklama</label>
+                <textarea name="description" rows="3" placeholder="Açıklama"></textarea>
+              </div>
+              <div class="field-row full-width">
+                <label>Kullanılan Teknolojiler</label>
+                <input name="technologies" type="text" placeholder="Teknolojiler" />
+              </div>
+              <div class="field-row">
+                <label>GitHub Linki</label>
+                <input name="github_link" type="text" placeholder="GitHub Linki" />
+                <label>Canlı Demo Linki</label>
+                <input name="demo_link" type="text" placeholder="Demo Linki" />
+              </div>
+              <div class="field-row full-width">
+                <label>Proje Görseli (İsteğe Bağlı)</label>
+                <input name="image_file" type="file" accept="image/png, image/jpeg, image/jpg, image/webp" />
+                <input name="image" type="hidden" />
+                <div id="preview-projects-image" style="margin-bottom: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+              </div>
+              <button type="submit" class="primary">Kaydet</button>
+            </form>
+            <div class="list-card card">
+              <h3>Mevcut Projeler</h3>
+              <div id="projects-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="skills" class="tab-content card">
+          <h2>Yetenekler</h2>
+          <div class="tab-description">Yetenek adını, kategorisini ve seviyesini kaydedebilirsin.</div>
+          <div class="tab-row">
+            <form id="skills-form" class="data-form">
+              <input name="id" type="hidden" />
+              <div class="field-row full-width">
+                <label>Yetenek Adı</label>
+                <input name="name" type="text" placeholder="Yetenek Adı" required />
+              </div>
+              <div class="field-row">
+                <label>Kategori</label>
+                <input name="category" type="text" placeholder="Kategori" />
+                <label>Seviye</label>
+                <input name="level" type="text" placeholder="Başlangıç / Orta / İleri" />
+              </div>
+              <button type="submit" class="primary">Kaydet</button>
+            </form>
+            <div class="list-card card">
+              <h3>Mevcut Yetenekler</h3>
+              <div id="skills-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="languages" class="tab-content card">
+          <h2>Diller</h2>
+          <div class="tab-description">Dil bilgilerini ve seviyeni ekleyebilirsin.</div>
+          <div class="tab-row">
+            <form id="languages-form" class="data-form">
+              <input name="id" type="hidden" />
+              <div class="field-row">
+                <label>Dil</label>
+                <input name="name" type="text" placeholder="Dil" required />
+                <label>Seviye</label>
+                <input name="level" type="text" placeholder="Başlangıç / Orta / İleri" />
+              </div>
+              <button type="submit" class="primary">Kaydet</button>
+            </form>
+            <div class="list-card card">
+              <h3>Mevcut Diller</h3>
+              <div id="languages-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="messages" class="tab-content card">
+          <h2>Gelen Mesajlar</h2>
+          <div class="tab-description">Site üzerinden gönderilen ziyaretçi mesajlarını buradan yönetebilirsiniz.</div>
+          <div class="tab-row">
+            <div class="list-card card" style="width: 100%;">
+              <div id="messages-list"></div>
+            </div>
+          </div>
+          
+          <!-- Message Detail Modal (Inline) -->
+          <div id="message-detail-modal" style="display:none; margin-top:20px; padding:20px; border:1px solid var(--border-color); border-radius:8px; background:var(--card-bg);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+              <h3 id="msg-detail-subject" style="margin:0; color:var(--text-color);">Konu</h3>
+              <button type="button" onclick="document.getElementById('message-detail-modal').style.display='none'" style="background:transparent; border:none; color:#cbd5e1; cursor:pointer; font-size:1.5rem;">&times;</button>
+            </div>
+            <div style="margin-bottom:10px; font-size:0.9em; color:#94a3b8;">
+              <strong>Gönderen:</strong> <span id="msg-detail-name"></span> &lt;<span id="msg-detail-email"></span>&gt; <br/>
+              <strong>Tarih:</strong> <span id="msg-detail-date"></span>
+            </div>
+            <hr style="border-color:var(--border-color); margin-bottom:15px;"/>
+            <div id="msg-detail-body" style="white-space: pre-wrap; color:var(--text-color); font-size:1em; line-height:1.6;"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/js/admin.js?v=1784816278"></script>
+</body>
+</html>
