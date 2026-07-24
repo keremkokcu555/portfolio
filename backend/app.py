@@ -12,6 +12,7 @@ from services.db import close_db, ensure_database
 from routes.cv_routes import cv_bp
 from routes.auth_routes import auth_bp
 from routes.message_routes import message_bp
+from routes.analytics_routes import analytics_bp
 
 app = Flask(__name__, template_folder='../frontend/templates', static_folder='../frontend/static')
 
@@ -37,6 +38,7 @@ CORS(app)
 app.register_blueprint(cv_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(message_bp)
+app.register_blueprint(analytics_bp)
 
 app.teardown_appcontext(close_db)
 ensure_database()
@@ -61,6 +63,25 @@ def security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+
+    # Ziyaret kaydı — yalnızca GET, yalnızca public portfolio
+    # try/except ile tamamen izole: hata portfolio'yu asla bozmaz
+    try:
+        if (
+            request.method == 'GET'
+            and response.status_code == 200
+            and request.path == '/'
+        ):
+            from services.analytics_service import record_visit
+            record_visit(
+                ip=request.remote_addr or '0.0.0.0',
+                path=request.path,
+                user_agent=request.headers.get('User-Agent', ''),
+                referrer=request.headers.get('Referer', ''),
+            )
+    except Exception:
+        pass
+
     return response
 
 def generate_csrf_token():

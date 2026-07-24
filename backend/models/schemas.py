@@ -148,6 +148,21 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 '''
 
+VISITOR_ANALYTICS_SCHEMA = '''
+CREATE TABLE IF NOT EXISTS visitor_analytics (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor_hash TEXT NOT NULL,
+    visited_at   TEXT NOT NULL,
+    path         TEXT DEFAULT '/',
+    device_type  TEXT,
+    browser      TEXT,
+    os           TEXT,
+    referrer     TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_analytics_visited_at   ON visitor_analytics(visited_at);
+CREATE INDEX IF NOT EXISTS idx_analytics_visitor_hash ON visitor_analytics(visitor_hash);
+'''
+
 SCHEMA_SQL = (
     PROFILE_SCHEMA
     + EDUCATION_SCHEMA
@@ -159,6 +174,7 @@ SCHEMA_SQL = (
     + LANGUAGES_SCHEMA
     + ADMINS_SCHEMA
     + MESSAGES_SCHEMA
+    + VISITOR_ANALYTICS_SCHEMA
 )
 
 REQUIRED_FIELDS = {
