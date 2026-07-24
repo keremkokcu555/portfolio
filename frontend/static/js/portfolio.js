@@ -291,6 +291,9 @@ const renderOverview = (data, profile) => {
       aboutHtml += addContact('GITHUB', profile.github, profile.github);
       aboutHtml += addContact('LİNKEDİN', profile.linkedin, profile.linkedin);
       aboutHtml += addContact('WEBSİTESİ', profile.website, profile.website);
+      aboutHtml += addContact('INSTAGRAM', profile.instagram, profile.instagram);
+      aboutHtml += addContact('X', profile.x, profile.x);
+      aboutHtml += addContact('YOUTUBE', profile.youtube, profile.youtube);
       
       aboutHtml += `</div></div></div>`;
       overview.innerHTML += aboutHtml;
