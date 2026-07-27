@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Portföy Kontrol Paneli</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
   <link rel="stylesheet" href="/static/css/style.css?v=1784807222" />
   <link rel="stylesheet" href="/static/css/visitor.css?v=1784808363" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -16,23 +17,20 @@
 
     
     <header class="visitor-navbar reveal-on-scroll">
-      <div class="visitor-navbar-inner" style="width: 100%; max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div class="visitor-brand" style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: #58A6FF; font-size: 1.1rem; letter-spacing: 0.1em; text-transform: uppercase;">KEREM KÖKCÜ</div>
-        <nav class="visitor-nav" style="width: 100%; display: flex; justify-content: center;">
-          <style>
-            @media (min-width: 768px) {
-              .visitor-nav { width: auto !important; justify-content: flex-end !important; }
-              .visitor-nav-list { gap: 32px !important; }
-            }
-          </style>
-          <ul class="visitor-nav-list" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; list-style: none; margin: 0; padding: 0;">
-          <li><a href="#" onclick="document.getElementById('projects-section')?.scrollIntoView({behavior: 'smooth'}); return false;" style="color: #F0F3F6; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s;">Projeler</a></li>
-          <li><a href="#" onclick="document.getElementById('experience-section')?.scrollIntoView({behavior: 'smooth'}); return false;" style="color: #F0F3F6; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s;">Deneyim</a></li>
-          <li><a href="#" onclick="document.getElementById('skills-section')?.scrollIntoView({behavior: 'smooth'}); return false;" style="color: #F0F3F6; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s;">Yetenekler</a></li>
-          <li><a href="#" onclick="document.getElementById('education-section')?.scrollIntoView({behavior: 'smooth'}); return false;" style="color: #F0F3F6; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s;">Eğitim</a></li>
-          <li><a href="#" onclick="window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'}); return false;" style="color: #F0F3F6; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s;">İletişim</a></li>
-        </ul>
-      </nav>
+      <div class="visitor-navbar-inner">
+        <a href="#" class="nav-logo-simple" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">
+          <span class="logo-initials">KK</span>
+          <span class="logo-fullname">KEREM KÖKCÜ</span>
+        </a>
+        <nav class="visitor-nav">
+          <ul class="visitor-nav-list">
+            <li><a href="#" onclick="document.getElementById('projects-section')?.scrollIntoView({behavior: 'smooth'}); return false;">Projeler</a></li>
+            <li><a href="#" onclick="document.getElementById('experience-section')?.scrollIntoView({behavior: 'smooth'}); return false;">Deneyim</a></li>
+            <li><a href="#" onclick="document.getElementById('skills-section')?.scrollIntoView({behavior: 'smooth'}); return false;">Yetenekler</a></li>
+            <li><a href="#" onclick="document.getElementById('education-section')?.scrollIntoView({behavior: 'smooth'}); return false;">Eğitim</a></li>
+            <li><a href="#" onclick="window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'}); return false;">İletişim</a></li>
+          </ul>
+        </nav>
       </div>
     </header>
     
@@ -40,15 +38,20 @@
     <main class="content-wrapper">
       <section class="main-panel">
         <section id="home" class="tab-content active">
-          <div class="hero-welcome">
-            <div class="eyebrow">HOŞ GELDİNİZ</div>
-            <h1>Dijital Portföyüm</h1>
-            <p>Eğitim hayatımı, projelerimi, deneyimlerimi ve teknik yeteneklerimi keşfedin.</p>
-            <div class="like-section" id="portfolio-like-container">
-              <h3>❤️ Destek Olun</h3>
-              <p>Projelerimi beğendiyseniz bana destek olmak için kalp bırakabilirsiniz!</p>
+          <div class="bento-hero-grid reveal-on-scroll">
+            <!-- Box 1: Welcome -->
+            <div class="bento-box hero-bento-card">
+              <div class="eyebrow" style="color: #58A6FF; font-weight: 600; letter-spacing: 0.1em; margin-bottom: 10px; font-size: 0.9rem;">HOŞ GELDİNİZ</div>
+              <h1 style="font-weight: 800; font-size: 2.5rem; background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%); -webkit-background-clip: text; color: transparent; margin-bottom: 20px; line-height: 1.2;">Dijital Portföyüm</h1>
+              <p style="color: #c9d1d9; line-height: 1.6; font-size: 1.1rem; max-width: 90%;">Eğitim hayatımı, projelerimi, deneyimlerimi ve teknik yeteneklerimi keşfedin.</p>
+            </div>
+
+            <!-- Box 2: Like & Support -->
+            <div class="bento-box hero-bento-card" id="portfolio-like-container" style="border: 1px solid rgba(88, 166, 255, 0.2); box-shadow: 0 0 30px rgba(88, 166, 255, 0.05) inset;">
+              <h3 style="color: #58a6ff; margin-bottom: 15px; font-size: 1.5rem; font-weight: 700;">❤️ Destek Olun</h3>
+              <p style="color: #8b949e; margin-bottom: 25px; font-size: 0.95rem;">Projelerimi beğendiyseniz bana destek olmak için kalp bırakabilirsiniz!</p>
               
-              <!-- Google GSI Button will be rendered here -->
+              <!-- Google GSI Button -->
               <div id="g_id_onload"
                  data-client_id="492466186850-rg2iqjkh1ij7393vji3gcnmq1c9bfaea.apps.googleusercontent.com"
                  data-context="use"
@@ -65,21 +68,23 @@
                  data-logo_alignment="left">
               </div>
             </div>
-          </div>
-          
-          <!-- İstatistikler Sayaç Alanı -->
-          <div class="stats-container reveal-on-scroll" id="stats-section">
-            <div class="stat-card">
-              <div class="stat-number" data-target="8" data-suffix="+">0</div>
-              <div class="stat-label">Tamamlanan Proje</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-number" data-target="15000" data-suffix="+">0</div>
-              <div class="stat-label">Yazılan Satır Kod</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-number" id="likes-counter" data-target="1" data-suffix=" ❤️">0</div>
-              <div class="stat-label">Topluluk Desteği</div>
+
+            <!-- Box 3: Stats -->
+            <div class="bento-box hero-bento-card" id="stats-section">
+              <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%; height: 100%; align-items: center;">
+                <div class="stat-card" style="flex: 1; min-width: 120px;">
+                  <div class="stat-number" data-target="8" data-suffix="+" style="font-size: 2.2rem; color: #58a6ff; font-weight: 800; font-family: 'Space Grotesk', sans-serif;">0</div>
+                  <div class="stat-label" style="font-size: 0.85rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 5px;">Proje</div>
+                </div>
+                <div class="stat-card" style="flex: 1; min-width: 120px;">
+                  <div class="stat-number" data-target="15000" data-suffix="+" style="font-size: 2.2rem; color: #58a6ff; font-weight: 800; font-family: 'Space Grotesk', sans-serif;">0</div>
+                  <div class="stat-label" style="font-size: 0.85rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 5px;">Satır Kod</div>
+                </div>
+                <div class="stat-card" style="flex: 1; min-width: 120px;">
+                  <div class="stat-number" id="likes-counter" data-target="1" data-suffix=" ❤️" style="font-size: 2.2rem; color: #ff6b6b; font-weight: 800; font-family: 'Space Grotesk', sans-serif; text-shadow: 0 0 15px rgba(255,107,107,0.4);">0</div>
+                  <div class="stat-label" style="font-size: 0.85rem; color: #ff6b6b; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 5px;">Topluluk Desteği</div>
+                </div>
+              </div>
             </div>
           </div>
           

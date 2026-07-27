@@ -333,45 +333,41 @@ const renderOverview = (data, profile) => {
       let aboutHtml = `<div id="about-section" class="editorial-section reveal-on-scroll">`;
       aboutHtml += sectionTitle('HAKKIMDA');
       
-      aboutHtml += `<div class="about-grid">`;
+      aboutHtml += `<div class="bento-grid">`;
       
-      aboutHtml += `<div class="about-content-left">`;
-      aboutHtml += `<div class="about-text">${safeStr(profile.summary).split('\n').join('<br><br>')}</div>`;
+      aboutHtml += `<div class="bento-box bento-wide reveal-on-scroll" style="flex-direction: row; gap: 20px; align-items: center; flex-wrap: wrap;">`;
+      if (safeUrl(profile.profile_photo)) {
+        aboutHtml += `<img src="${safeUrl(profile.profile_photo)}" style="width: 150px; height: 150px; border-radius: 20px; object-fit: cover; border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">`;
+      }
+      aboutHtml += `<div style="flex: 1; min-width: 250px;">`;
+      aboutHtml += `<h2 style="margin-bottom: 15px; color: #fff;">${safeStr(profile.name)}</h2>`;
+      aboutHtml += `<div class="skills-container" style="margin-bottom: 20px;">
+          <span class="badge primary">Backend Developer</span>
+          <span class="badge">Clean Code</span>
+          ${safeStr(profile.city) ? `<span class="badge">📍 ${safeStr(profile.city)}</span>` : ''}
+        </div>`;
+      aboutHtml += `<div class="about-text" style="color: #c9d1d9;">${safeStr(profile.summary).split('\n').join('<br><br>')}</div>`;
+      aboutHtml += `</div></div>`; // End of about-content bento-box
       
-      aboutHtml += `
-        <div class="code-widget reveal-on-scroll">
-          <div class="code-header">
-            <div class="mac-btns"><i></i><i></i><i></i></div>
-            <div class="code-title">developer.py</div>
-          </div>
-          <pre class="code-content"><code><span class="c-kw">class</span> <span class="c-cl">Gelistirici</span>:
-    <span class="c-kw">def</span> <span class="c-fn">__init__</span>(<span class="c-kw">self</span>):
-        <span class="c-kw">self</span>.isim = <span class="c-str">"${safeStr(profile.name)}"</span>
-        <span class="c-kw">self</span>.rol = <span class="c-str">"Backend Developer"</span>
-        
-    <span class="c-kw">def</span> <span class="c-fn">hedef</span>(<span class="c-kw">self</span>):
-        <span class="c-kw">return</span> <span class="c-str">"Scalable & Clean Code"</span></code></pre>
-        </div>
-      `;
-      aboutHtml += `</div>`;
-      
-      aboutHtml += `<div class="about-contact">`;
+      // Contact Info Bento Box
+      aboutHtml += `<div class="bento-box reveal-on-scroll" style="justify-content: flex-start;">`;
+      aboutHtml += `<h3 style="margin-bottom: 20px; color: #58a6ff;">İletişim & Sosyal</h3>`;
+      aboutHtml += `<div style="display: flex; flex-direction: column; gap: 15px;">`;
       const addContact = (label, val, link='') => {
         if(!safeStr(val)) return '';
-        const v = link ? `<a href="${link}" target="_blank">${safeStr(val)} ↗</a>` : safeStr(val);
-        return `<div class="contact-item"><div class="contact-label">${label}</div><div class="contact-val">${v}</div></div>`;
+        const v = link ? `<a href="${link}" target="_blank" style="color: #fff; text-decoration: none;">${safeStr(val)} ↗</a>` : `<span style="color:#fff;">${safeStr(val)}</span>`;
+        return `<div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+            <span style="color: #8b949e; font-size: 0.9rem;">${label}</span>
+            <span>${v}</span>
+          </div>`;
       };
-      aboutHtml += addContact('ŞEHİR', profile.city);
-      aboutHtml += addContact('TELEFON', profile.phone, safeStr(profile.phone) ? 'tel:'+profile.phone : '');
-      aboutHtml += addContact('E-POSTA', profile.email, safeStr(profile.email) ? 'mailto:'+profile.email : '');
-      aboutHtml += addContact('GITHUB', profile.github, profile.github);
-      aboutHtml += addContact('LİNKEDİN', profile.linkedin, profile.linkedin);
-      aboutHtml += addContact('WEBSİTESİ', profile.website, profile.website);
-      aboutHtml += addContact('INSTAGRAM', profile.instagram, profile.instagram);
-      aboutHtml += addContact('X', profile.x, profile.x);
-      aboutHtml += addContact('YOUTUBE', profile.youtube, profile.youtube);
+      aboutHtml += addContact('E-Posta', profile.email, safeStr(profile.email) ? 'mailto:'+profile.email : '');
+      aboutHtml += addContact('GitHub', 'github.com', profile.github);
+      aboutHtml += addContact('LinkedIn', 'linkedin.com', profile.linkedin);
+      aboutHtml += addContact('Web', 'Siteye Git', profile.website);
+      aboutHtml += `</div></div>`;
       
-      aboutHtml += `</div></div></div>`;
+      aboutHtml += `</div></div>`;
       overview.innerHTML += aboutHtml;
     }
   }
@@ -381,32 +377,37 @@ const renderOverview = (data, profile) => {
     overview.innerHTML += hr();
     let projHtml = `<div id="projects-section" class="editorial-section reveal-on-scroll">`;
     projHtml += sectionTitle('SEÇİLMİŞ PROJELER');
+    projHtml += `<div class="projects-bento-grid">`;
     
     data.projects.forEach((p, idx) => {
-      const num = String(idx + 1).padStart(2, '0');
       let linksHtml = '';
-      if(safeUrl(p.github_link)) linksHtml += `<a href="${safeUrl(p.github_link)}" target="_blank" class="proj-link">GitHub <span class="proj-arrow">↗</span></a>`;
-      if(safeUrl(p.demo_link)) linksHtml += `<a href="${safeUrl(p.demo_link)}" target="_blank" class="proj-link">Canlı Site <span class="proj-arrow">↗</span></a>`;
+      if(safeUrl(p.github_link)) linksHtml += `<a href="${safeUrl(p.github_link)}" target="_blank" class="badge">GitHub ↗</a>`;
+      if(safeUrl(p.demo_link)) linksHtml += `<a href="${safeUrl(p.demo_link)}" target="_blank" class="badge primary">Canlı Demo ↗</a>`;
       
-      let techHtml = safeStr(p.technologies).split(',').map(t => t.trim()).filter(Boolean).join(' • ');
+      let techHtml = safeStr(p.technologies).split(',').map(t => t.trim()).filter(Boolean)
+        .map(t => `<span class="tech-tag">${t}</span>`).join('');
 
       projHtml += `
-        <div class="proj-row">
-          <div class="proj-num">${num}</div>
-          <div class="proj-content">
-            <h3 class="proj-title">${safeStr(p.title)}</h3>
-            ${safeStr(p.category) ? `<div class="proj-cat">${safeStr(p.category)}</div>` : ''}
-            <div class="proj-desc">${safeStr(p.description)}</div>
-            ${safeUrl(p.image) ? `<img src="${safeUrl(p.image)}" onerror="this.style.display='none'" style="max-width:100%; border-radius:4px; margin-bottom:24px; border:1px solid var(--border-color);">` : ''}
-            <div class="proj-tech-row">
-              <div class="proj-tech">${techHtml}</div>
-              <div class="proj-links">${linksHtml}</div>
-            </div>
+        <div class="bento-box reveal-on-scroll">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <h3 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; color: #fff;">${safeStr(p.title)}</h3>
+            <span class="proj-hint" style="color: rgba(255,255,255,0.15); font-size: 1.4rem; font-weight: bold; transition: all 0.3s ease;">↗</span>
+          </div>
+          ${safeStr(p.category) ? `<div style="color: #58a6ff; font-size: 0.9rem; margin-bottom: 15px; letter-spacing: 0.05em;">${safeStr(p.category).toUpperCase()}</div>` : ''}
+          <div style="color: #c9d1d9; line-height: 1.6; margin-bottom: 20px; flex-grow: 1;">${safeStr(p.description)}</div>
+          ${safeUrl(p.image) ? `<img src="${safeUrl(p.image)}" onerror="this.style.display='none'" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);">` : ''}
+          
+          <div class="project-tech-stack" style="margin-bottom: 20px;">
+            ${techHtml}
+          </div>
+          
+          <div style="display: flex; gap: 10px;">
+            ${linksHtml}
           </div>
         </div>
       `;
     });
-    projHtml += `</div>`;
+    projHtml += `</div></div>`;
     overview.innerHTML += projHtml;
   }
 
@@ -415,23 +416,24 @@ const renderOverview = (data, profile) => {
     overview.innerHTML += hr();
     let expHtml = `<div id="experience-section" class="editorial-section reveal-on-scroll">`;
     expHtml += sectionTitle('DENEYİM');
+    expHtml += `<div class="bento-grid">`;
     data.experiences.forEach(e => {
       const startYear = safeStr(e.start_date).split('-')[0] || safeStr(e.start_date);
       const endYear = e.ongoing ? 'DEVAM' : (safeStr(e.end_date).split('-')[0] || safeStr(e.end_date));
       const dateStr = `${startYear} — ${endYear}`;
       expHtml += `
-        <div class="timeline-row">
-          <div class="timeline-date">${dateStr}</div>
-          <div>
-            <h3 class="timeline-title">${safeStr(e.company)}</h3>
-            <div class="timeline-subtitle">${safeStr(e.position)}${safeStr(e.department) ? ` • ${safeStr(e.department)}` : ''}</div>
-            <div class="timeline-desc">${safeStr(e.description)}</div>
-            ${safeStr(e.city) ? `<div class="timeline-meta">${safeStr(e.city)}</div>` : ''}
+        <div class="bento-box reveal-on-scroll">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+            <h3 style="font-size: 1.3rem; font-weight: 700; color: #fff; margin: 0;">${safeStr(e.company)}</h3>
+            <span class="pill" style="font-size: 0.8rem;">${dateStr}</span>
           </div>
+          <div style="color: #58a6ff; font-weight: 600; margin-bottom: 15px;">${safeStr(e.position)}${safeStr(e.department) ? ` • ${safeStr(e.department)}` : ''}</div>
+          <div style="color: #c9d1d9; line-height: 1.6;">${safeStr(e.description)}</div>
+          ${safeStr(e.city) ? `<div style="margin-top: 15px; color: #8b949e; font-size: 0.9rem;">📍 ${safeStr(e.city)}</div>` : ''}
         </div>
       `;
     });
-    expHtml += `</div>`;
+    expHtml += `</div></div>`;
     overview.innerHTML += expHtml;
   }
 
@@ -440,21 +442,13 @@ const renderOverview = (data, profile) => {
     overview.innerHTML += hr();
     let skHtml = `<div id="skills-section" class="editorial-section reveal-on-scroll">`;
     skHtml += sectionTitle('YETENEKLER');
-    skHtml += `<div class="bento-grid">`;
-    data.skills.forEach((s, idx) => {
-      // Make every 3rd or 4th item a wide box to create an asymmetrical Bento effect
-      const boxClass = (idx % 4 === 0 || idx % 5 === 0) ? 'bento-box bento-wide' : 'bento-box';
-      skHtml += `
-        <div class="${boxClass}">
-          <div>
-            <h3 class="skill-name">${safeStr(s.name)}</h3>
-            ${(safeStr(s.category) || safeStr(s.level)) ? `<div class="skill-meta">${safeStr(s.category)} ${safeStr(s.category) && safeStr(s.level) ? '•' : ''} ${safeStr(s.level)}</div>` : ''}
-          </div>
-          ${safeUrl(s.certificate_link) ? `<a href="${safeUrl(s.certificate_link)}" target="_blank" class="skill-arrow" style="text-decoration:none;">↗</a>` : ''}
-        </div>
-      `;
+    // Group skills by category if possible, or just display them as a dense cloud of badges
+    skHtml += `<div class="bento-box reveal-on-scroll" style="padding: 40px 30px;">`;
+    skHtml += `<div class="skills-container" style="justify-content: center; gap: 12px;">`;
+    data.skills.forEach((s) => {
+      skHtml += `<span class="tech-tag" style="font-size: 1.1rem; padding: 10px 20px;">${safeStr(s.name)}</span>`;
     });
-    skHtml += `</div></div>`;
+    skHtml += `</div></div></div>`;
     overview.innerHTML += skHtml;
   }
 
@@ -463,72 +457,96 @@ const renderOverview = (data, profile) => {
     overview.innerHTML += hr();
     let edHtml = `<div id="education-section" class="editorial-section reveal-on-scroll">`;
     edHtml += sectionTitle('EĞİTİM');
+    edHtml += `<div class="bento-grid">`;
     data.education.forEach(e => {
       const startYear = safeStr(e.start_date).split('-')[0] || safeStr(e.start_date);
       const endYear = e.ongoing ? 'DEVAM' : (safeStr(e.end_date).split('-')[0] || safeStr(e.end_date));
       const dateStr = `${startYear} — ${endYear}`;
       edHtml += `
-        <div class="timeline-row">
-          <div class="timeline-date">${dateStr}</div>
-          <div>
-            <h3 class="timeline-title">${safeStr(e.school)}</h3>
-            <div class="timeline-subtitle">${safeStr(e.department)}</div>
-            ${safeStr(e.description) ? `<div class="timeline-desc">${safeStr(e.description)}</div>` : ''}
-            ${safeStr(e.gpa) || safeStr(e.city) ? `<div class="timeline-meta">${[safeStr(e.city), safeStr(e.gpa) ? `GPA: ${safeStr(e.gpa)}` : ''].filter(Boolean).join(' • ')}</div>` : ''}
+        <div class="bento-box reveal-on-scroll">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+            <h3 style="font-size: 1.3rem; font-weight: 700; color: #fff; margin: 0;">${safeStr(e.school)}</h3>
+            <span class="pill primary" style="font-size: 0.8rem;">${dateStr}</span>
           </div>
+          <div style="color: #58a6ff; font-weight: 600; margin-bottom: 15px;">${safeStr(e.department)}</div>
+          ${safeStr(e.description) ? `<div style="color: #c9d1d9; line-height: 1.6; margin-bottom: 15px;">${safeStr(e.description)}</div>` : ''}
+          ${safeStr(e.gpa) || safeStr(e.city) ? `<div style="display: flex; gap: 10px; margin-top: auto;">${safeStr(e.city) ? `<span class="badge">📍 ${safeStr(e.city)}</span>` : ''}${safeStr(e.gpa) ? `<span class="badge">GPA: ${safeStr(e.gpa)}</span>` : ''}</div>` : ''}
         </div>
       `;
     });
-    edHtml += `</div>`;
+    edHtml += `</div></div>`;
     overview.innerHTML += edHtml;
   }
   
   // 8. SERTİFİKALAR VE KURSLAR
   if ((data.certificates && data.certificates.length > 0) || (data.courses && data.courses.length > 0)) {
     overview.innerHTML += hr();
-    let certHtml = `<div class="editorial-section reveal-on-scroll">`;
-    certHtml += `<div class="two-col-certs">`;
+    let certHtml = `<div id="certificates-section" class="editorial-section reveal-on-scroll">`;
+    certHtml += sectionTitle('SERTİFİKALAR VE KURSLAR');
+    certHtml += `<div class="bento-grid">`;
     
-    // Left: Certificates
-    certHtml += `<div class="cert-col">`;
+    const extractTags = (text) => {
+      if (!text) return { tags: [], desc: '' };
+      let tags = [];
+      let desc = text;
+      
+      // Extract bracketed tags like [24 Saatlik Eğitim]
+      const bracketRegex = /\[(.*?)\]/g;
+      let match;
+      while ((match = bracketRegex.exec(text)) !== null) {
+        tags.push(match[1]);
+        desc = desc.replace(match[0], '');
+      }
+      
+      // Auto-extract common tech words
+      const kw = ['Python', 'Backend', 'REST API', 'FastAPI', 'SQLite', 'SQL', 'Docker', 'Git', 'Java', 'C#', '.NET', 'React', 'Node.js', 'Linux', 'Javascript', 'HTML', 'CSS', 'Geliştirme', 'Mimarisi'];
+      kw.forEach(k => {
+        if (desc.toLowerCase().includes(k.toLowerCase()) && !tags.includes(k)) {
+          tags.push(k);
+        }
+      });
+      
+      return { tags, desc: desc.trim() };
+    };
+
+    const renderCard = (title, org, dateStr, desc, link, icon) => {
+      const { tags, desc: cleanDesc } = extractTags(desc);
+      let tagsHtml = tags.map(t => `<span class="tech-tag">${t}</span>`).join('');
+      return `
+        <div class="bento-box reveal-on-scroll" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h3 style="font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
+              <span>${icon}</span> ${safeStr(title)}
+            </h3>
+            <div style="color: #8b949e; font-size: 0.85rem; margin-bottom: 15px; letter-spacing: 0.05em; text-transform: uppercase;">
+              ${safeStr(org)} • ${safeStr(dateStr)}
+            </div>
+            ${cleanDesc ? `<div style="color: #c9d1d9; line-height: 1.6; font-size: 0.95rem; margin-bottom: 20px;">${cleanDesc}</div>` : ''}
+          </div>
+          <div style="margin-top: auto;">
+            ${tagsHtml ? `<div class="skills-container" style="margin-bottom: 20px;">${tagsHtml}</div>` : ''}
+            ${link ? `<div style="display: flex; justify-content: flex-end;"><a href="${link}" target="_blank" class="badge primary" style="text-decoration: none;">Sertifikayı İncele ↗</a></div>` : ''}
+          </div>
+        </div>
+      `;
+    };
+
     if (data.certificates && data.certificates.length > 0) {
-      certHtml += `<h2 class="editorial-title" style="font-size:2rem;">SERTİFİKALAR</h2>`;
       data.certificates.forEach(c => {
         const year = safeStr(c.date).split('-')[0] || safeStr(c.date);
         const credLink = safeUrl(c.credential_url) || safeUrl(c.certificate_link) || safeUrl(c.pdf);
-        certHtml += `
-          <div class="cert-item">
-            <h3 class="cert-title">${safeStr(c.name)}</h3>
-            <div class="cert-org">${safeStr(c.organization)}</div>
-            <div class="cert-date">${year}</div>
-            ${safeStr(c.description) ? `<div class="cert-desc">${safeStr(c.description)}</div>` : ''}
-            ${credLink ? `<a href="${credLink}" target="_blank" class="cert-link">Sertifikayı Gör <span class="proj-arrow">↗</span></a>` : ''}
-          </div>
-        `;
+        certHtml += renderCard(c.name, c.organization, year, c.description, credLink, '📜');
       });
     }
-    certHtml += `</div>`;
-    
-    // Right: Courses
-    certHtml += `<div class="cert-col">`;
+
     if (data.courses && data.courses.length > 0) {
-      certHtml += `<h2 class="editorial-title" style="font-size:2rem;">KURSLAR</h2>`;
       data.courses.forEach(c => {
         const year = safeStr(c.end_date).split('-')[0] || safeStr(c.end_date);
         const certLink = safeUrl(c.certificate_link) || safeUrl(c.pdf);
-        certHtml += `
-          <div class="cert-item">
-            <h3 class="cert-title">${safeStr(c.title)}</h3>
-            <div class="cert-org">${safeStr(c.organization)}</div>
-            <div class="cert-date">${year}</div>
-            ${safeStr(c.description) ? `<div class="cert-desc">${safeStr(c.description)}</div>` : ''}
-            ${certLink ? `<a href="${certLink}" target="_blank" class="cert-link">Sertifikayı Gör <span class="proj-arrow">↗</span></a>` : ''}
-          </div>
-        `;
+        certHtml += renderCard(c.title, c.organization, year, c.description, certLink, '🏆');
       });
     }
-    certHtml += `</div>`;
-    
+
     certHtml += `</div></div>`;
     overview.innerHTML += certHtml;
   }
