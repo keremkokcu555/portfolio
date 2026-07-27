@@ -8,7 +8,7 @@ import os
 likes_bp = Blueprint('likes', __name__)
 
 # Bu ID daha sonra user tarafından doldurulacak
-GOOGLE_CLIENT_ID = "BURAYA_GOOGLE_CLIENT_ID_GELECEK"
+GOOGLE_CLIENT_ID = "492466186850-rg2iqjkh1ij7393vji3gcnmq1c9bfaea.apps.googleusercontent.com"
 
 @likes_bp.route('/api/like-portfolio', methods=['POST'])
 def like_portfolio():
@@ -21,10 +21,7 @@ def like_portfolio():
         # Token doğrulama
         # GOOGLE_CLIENT_ID gerçek bir ID olana kadar doğrulamayı atlamaması için dikkat edilmeli.
         # Eğer placeholder ise hata fırlatabilir, bu yüzden try-except bloğu önemli.
-        if GOOGLE_CLIENT_ID == "BURAYA_GOOGLE_CLIENT_ID_GELECEK":
-            # Geliştirme/yerel test aşaması veya henüz ID ayarlanmamış
-            # Gerçekte GSI çalışmaz ancak frontend hatasını engellemek için.
-            return jsonify({'error': 'Google Client ID henüz ayarlanmadı.'}), 400
+
 
         idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), GOOGLE_CLIENT_ID)
         
