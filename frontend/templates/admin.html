@@ -33,6 +33,7 @@
             <li class="nav-item"><button class="nav-link" data-target="messages">Gelen Mesajlar <span id="nav-unread-badge" style="display:none; background:#ef4444; color:white; border-radius:50%; padding:2px 6px; font-size:12px; margin-left:5px;">0</span></button></li>
             
             <li class="nav-item"><button class="nav-link" data-target="analytics">📊 Analitik</button></li>
+            <li class="nav-item"><button class="nav-link" data-target="likes">❤️ Beğeniler</button></li>
             <li class="nav-item"><button id="logout-btn" class="nav-link" style="color: #ef4444;">Çıkış Yap</button></li>
             
           </ul>
@@ -511,7 +512,7 @@
         <!-- ── Ziyaretçi Analitiği Sekmesi ─────────────────────────── -->
         <section id="analytics" class="tab-content card">
           <h2>Ziyaretçi Analitiği</h2>
-          <div class="tab-description">Public portföyünüzü ziyaret eden anonim kullanıcılara ait istatistikler. Ham IP adresi hiçbir şekilde saklanmamaktadır.</div>
+          <div class="tab-description">Public portföyünüzü ziyaret eden anonim kullanıcılara ait istatistikler. Ziyaretçi IP adresleri güvenlik ve analitik amacıyla kayıt altına alınmaktadır.</div>
 
           <!-- Özet Kartlar -->
           <div class="db-stats-grid" id="analytics-summary-grid" style="margin-top:18px; margin-bottom:22px;">
@@ -582,6 +583,7 @@
                     <thead>
                       <tr style="color:#94a3b8; border-bottom:1px solid rgba(255,255,255,0.1);">
                         <th style="text-align:left; padding:5px 8px; font-weight:500;">Tarih</th>
+                        <th style="text-align:left; padding:5px 8px; font-weight:500;">IP Adresi</th>
                         <th style="text-align:left; padding:5px 8px; font-weight:500;">Cihaz</th>
                         <th style="text-align:left; padding:5px 8px; font-weight:500;">Tarayıcı</th>
                         <th style="text-align:left; padding:5px 8px; font-weight:500;">İşletim Sistemi</th>
@@ -589,7 +591,7 @@
                       </tr>
                     </thead>
                     <tbody id="an-recent-body">
-                      <tr><td colspan="5" style="text-align:center; padding:12px; color:#64748b;">Yükleniyor...</td></tr>
+                      <tr><td colspan="6" style="text-align:center; padding:12px; color:#64748b;">Yükleniyor...</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -648,6 +650,30 @@
 
             </div><!-- /sağ kolon -->
 
+          </div>
+        </section>
+
+        <!-- ── Beğenenler Sekmesi ─────────────────────────── -->
+        <section id="likes" class="tab-content card">
+          <h2>Portfolyoyu Beğenenler</h2>
+          <div class="tab-description">Portfolyonuzu Google hesabı ile giriş yaparak beğenen destekçileriniz.</div>
+          <div class="tab-row">
+            <div class="list-card card" style="flex:1;">
+              <div style="overflow-x:auto;">
+                <table id="likes-table" style="width:100%; border-collapse:collapse; font-size:0.9em; margin-top:10px;">
+                  <thead>
+                    <tr style="color:#94a3b8; border-bottom:1px solid rgba(255,255,255,0.1);">
+                      <th style="text-align:left; padding:8px; font-weight:500;">Kullanıcı</th>
+                      <th style="text-align:left; padding:8px; font-weight:500;">E-posta</th>
+                      <th style="text-align:left; padding:8px; font-weight:500;">Beğenme Tarihi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="likes-body">
+                    <tr><td colspan="3" style="text-align:center; padding:15px; color:#64748b;">Yükleniyor...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 

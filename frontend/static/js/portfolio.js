@@ -1,4 +1,60 @@
+// Tarayıcının otomatik kaydırma (scroll) hafızasını devre dışı bırak
+if (history.scrollRestoration) {
+  history.scrollRestoration = 'manual';
+}
+
+// Sayfa yüklendiğinde kesinlikle en üste gitmesini garantiye al
+window.addEventListener('DOMContentLoaded', () => {
+  window.scrollTo(0, 0);
+});
+
 const apiBase = '/api';
+
+const showToast = (message, type = 'success') => {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span>${message}</span>
+  `;
+  container.appendChild(toast);
+  
+  // Trigger animation
+  setTimeout(() => toast.classList.add('show'), 10);
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+};
+
+window.handleGoogleLogin = async (response) => {
+  showToast('İşleniyor...', 'info');
+
+  try {
+    const res = await fetch(`${apiBase}/like-portfolio`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential })
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+      if (res.status === 200 && data.message.includes('Daha önce')) {
+        showToast('Portfolyomu zaten beğenmişsiniz, sonsuz teşekkürler! 🙏', 'success');
+      } else {
+        showToast('Teşekkürler! Beğeniniz ve desteğiniz kaydedildi ❤️', 'success');
+      }
+    } else {
+      showToast(data.error || 'Bir hata oluştu.', 'error');
+    }
+  } catch (error) {
+    showToast('Bağlantı hatası.', 'error');
+  }
+};
 
 const navButtons = document.querySelectorAll('.top-nav .nav-link[data-target]');
 const mobileToggle = document.querySelector('.navbar-toggle');
@@ -202,18 +258,19 @@ const loadData = async () => {
 };
 
 const renderOverview = (data, profile) => {
-  if (!document.getElementById('visitor-bg')) {
-    const bg = document.createElement('div');
-    bg.id = 'visitor-bg';
-    bg.className = 'visitor-bg-container';
-    bg.innerHTML = '<div class="visitor-bg-orb-1"></div><div class="visitor-bg-orb-2"></div><div class="visitor-bg-noise"></div>';
-    document.body.prepend(bg);
+  if (!document.getElementById('visitor-bg-tracked')) {
+    const marker = document.createElement('div');
+    marker.id = 'visitor-bg-tracked';
+    document.body.prepend(marker);
     
     document.addEventListener('mousemove', (e) => {
-      const x = (e.clientX / window.innerWidth) * 100;
-      const y = (e.clientY / window.innerHeight) * 100;
-      bg.style.setProperty('--mouse-x', `${x}%`);
-      bg.style.setProperty('--mouse-y', `${y}%`);
+      // Sadece masaüstü (768px üzeri) için mouse takibi (performans optimizasyonu)
+      if (window.innerWidth >= 768) {
+        const x = (e.clientX / window.innerWidth) * 100;
+        const y = (e.clientY / window.innerHeight) * 100;
+        document.body.style.setProperty('--mouse-x', `${x}%`);
+        document.body.style.setProperty('--mouse-y', `${y}%`);
+      }
     });
   }
 
@@ -277,7 +334,26 @@ const renderOverview = (data, profile) => {
       aboutHtml += sectionTitle('HAKKIMDA');
       
       aboutHtml += `<div class="about-grid">`;
+      
+      aboutHtml += `<div class="about-content-left">`;
       aboutHtml += `<div class="about-text">${safeStr(profile.summary).split('\n').join('<br><br>')}</div>`;
+      
+      aboutHtml += `
+        <div class="code-widget reveal-on-scroll">
+          <div class="code-header">
+            <div class="mac-btns"><i></i><i></i><i></i></div>
+            <div class="code-title">developer.py</div>
+          </div>
+          <pre class="code-content"><code><span class="c-kw">class</span> <span class="c-cl">Gelistirici</span>:
+    <span class="c-kw">def</span> <span class="c-fn">__init__</span>(<span class="c-kw">self</span>):
+        <span class="c-kw">self</span>.isim = <span class="c-str">"${safeStr(profile.name)}"</span>
+        <span class="c-kw">self</span>.rol = <span class="c-str">"Backend Developer"</span>
+        
+    <span class="c-kw">def</span> <span class="c-fn">hedef</span>(<span class="c-kw">self</span>):
+        <span class="c-kw">return</span> <span class="c-str">"Scalable & Clean Code"</span></code></pre>
+        </div>
+      `;
+      aboutHtml += `</div>`;
       
       aboutHtml += `<div class="about-contact">`;
       const addContact = (label, val, link='') => {
@@ -364,9 +440,12 @@ const renderOverview = (data, profile) => {
     overview.innerHTML += hr();
     let skHtml = `<div id="skills-section" class="editorial-section reveal-on-scroll">`;
     skHtml += sectionTitle('YETENEKLER');
-    data.skills.forEach(s => {
+    skHtml += `<div class="bento-grid">`;
+    data.skills.forEach((s, idx) => {
+      // Make every 3rd or 4th item a wide box to create an asymmetrical Bento effect
+      const boxClass = (idx % 4 === 0 || idx % 5 === 0) ? 'bento-box bento-wide' : 'bento-box';
       skHtml += `
-        <div class="skill-row">
+        <div class="${boxClass}">
           <div>
             <h3 class="skill-name">${safeStr(s.name)}</h3>
             ${(safeStr(s.category) || safeStr(s.level)) ? `<div class="skill-meta">${safeStr(s.category)} ${safeStr(s.category) && safeStr(s.level) ? '•' : ''} ${safeStr(s.level)}</div>` : ''}
@@ -375,7 +454,7 @@ const renderOverview = (data, profile) => {
         </div>
       `;
     });
-    skHtml += `</div>`;
+    skHtml += `</div></div>`;
     overview.innerHTML += skHtml;
   }
 
@@ -499,9 +578,21 @@ const renderOverview = (data, profile) => {
     footerHtml += `
       <h2 class="footer-cta">Bir proje üzerinde<br>birlikte çalışalım.</h2>
       <div class="footer-links">
-        ${safeStr(profile.email) ? `<a href="mailto:${safeStr(profile.email)}" class="footer-link">E-POSTA ↗</a>` : ''}
-        ${safeUrl(profile.github) ? `<a href="${safeUrl(profile.github)}" target="_blank" class="footer-link">GITHUB ↗</a>` : ''}
-        ${safeUrl(profile.linkedin) ? `<a href="${safeUrl(profile.linkedin)}" target="_blank" class="footer-link">LINKEDIN ↗</a>` : ''}
+        ${safeStr(profile.email) ? `<a href="mailto:${safeStr(profile.email)}" class="footer-link">
+          <svg class="footer-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          E-POSTA
+          <span class="hover-arrow">&rarr;</span>
+        </a>` : ''}
+        ${safeUrl(profile.github) ? `<a href="${safeUrl(profile.github)}" target="_blank" class="footer-link">
+          <svg class="footer-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+          GITHUB
+          <span class="hover-arrow">&rarr;</span>
+        </a>` : ''}
+        ${safeUrl(profile.linkedin) ? `<a href="${safeUrl(profile.linkedin)}" target="_blank" class="footer-link">
+          <svg class="footer-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+          LINKEDIN
+          <span class="hover-arrow">&rarr;</span>
+        </a>` : ''}
       </div>
       <div class="footer-bottom">
         <div>${safeStr(profile.name).toUpperCase()}</div>
@@ -513,7 +604,7 @@ const renderOverview = (data, profile) => {
     overview.innerHTML += footerHtml;
   }
   
-  // Observer
+  // Observer for reveal-on-scroll elements
   const observer = new IntersectionObserver((entries, obs) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -524,6 +615,57 @@ const renderOverview = (data, profile) => {
   }, { threshold: 0.1 });
   
   document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+
+  // Stats Counter Animation
+  const statsSection = document.getElementById('stats-section');
+  if (statsSection) {
+    const likesCounter = document.getElementById('likes-counter');
+    if (likesCounter) {
+      likesCounter.setAttribute('data-target', profile.total_likes || 0);
+    }
+
+    const animateCounters = (entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const numbers = entry.target.querySelectorAll('.stat-number');
+          numbers.forEach(num => {
+            const target = +num.getAttribute('data-target');
+            const suffix = num.getAttribute('data-suffix') || '';
+            const duration = 2000;
+            const startTime = performance.now();
+            
+            const updateCount = (currentTime) => {
+              const elapsed = currentTime - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+              const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+              const current = Math.floor(target * easeOutQuart);
+              
+              if (current >= 1000) {
+                 num.textContent = (current / 1000).toFixed(current % 1000 === 0 ? 0 : 1) + 'k' + suffix;
+              } else {
+                 num.textContent = current + suffix;
+              }
+              
+              if (progress < 1) {
+                requestAnimationFrame(updateCount);
+              } else {
+                if (target >= 1000) {
+                   num.textContent = (target).toLocaleString('tr-TR') + suffix;
+                } else {
+                   num.textContent = target + suffix;
+                }
+              }
+            };
+            requestAnimationFrame(updateCount);
+          });
+          obs.unobserve(entry.target);
+        }
+      });
+    };
+    
+    const statsObserver = new IntersectionObserver(animateCounters, { threshold: 0.5 });
+    statsObserver.observe(statsSection);
+  }
 };
 
 // Contact Form Submit handler

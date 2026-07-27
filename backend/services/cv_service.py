@@ -43,8 +43,16 @@ def row_to_dict(row):
 
 def get_profile():
     db = get_db()
-    return row_to_dict(db.execute('SELECT * FROM profile WHERE id = 1').fetchone())
-
+    profile = row_to_dict(db.execute('SELECT * FROM profile WHERE id = 1').fetchone())
+    
+    # Try fetching total_likes safely in case the table is missing for some reason
+    try:
+        likes = db.execute('SELECT COUNT(*) as cnt FROM portfolio_likes').fetchone()
+        profile['total_likes'] = likes['cnt'] if likes else 0
+    except Exception:
+        profile['total_likes'] = 0
+        
+    return profile
 
 def update_profile(payload):
     fields = [

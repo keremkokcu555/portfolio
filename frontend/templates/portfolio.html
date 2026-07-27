@@ -6,6 +6,7 @@
   <title>Portföy Kontrol Paneli</title>
   <link rel="stylesheet" href="/static/css/style.css?v=1784807222" />
   <link rel="stylesheet" href="/static/css/visitor.css?v=1784808363" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="home-active visitor-mode">
   <div class="page-shell">
@@ -43,8 +44,73 @@
             <div class="eyebrow">HOŞ GELDİNİZ</div>
             <h1>Dijital Portföyüm</h1>
             <p>Eğitim hayatımı, projelerimi, deneyimlerimi ve teknik yeteneklerimi keşfedin.</p>
+            <div class="like-section" id="portfolio-like-container">
+              <h3>❤️ Destek Olun</h3>
+              <p>Projelerimi beğendiyseniz bana destek olmak için kalp bırakabilirsiniz!</p>
+              
+              <!-- Google GSI Button will be rendered here -->
+              <div id="g_id_onload"
+                 data-client_id="BURAYA_GOOGLE_CLIENT_ID_GELECEK"
+                 data-context="use"
+                 data-ux_mode="popup"
+                 data-callback="handleGoogleLogin"
+                 data-auto_prompt="false">
+              </div>
+              <div class="g_id_signin"
+                 data-type="standard"
+                 data-shape="rectangular"
+                 data-theme="filled_black"
+                 data-text="continue_with"
+                 data-size="large"
+                 data-logo_alignment="left">
+              </div>
+            </div>
           </div>
           
+          <!-- İstatistikler Sayaç Alanı -->
+          <div class="stats-container reveal-on-scroll" id="stats-section">
+            <div class="stat-card">
+              <div class="stat-number" data-target="8" data-suffix="+">0</div>
+              <div class="stat-label">Tamamlanan Proje</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" data-target="15000" data-suffix="+">0</div>
+              <div class="stat-label">Yazılan Satır Kod</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="likes-counter" data-target="1" data-suffix=" ❤️">0</div>
+              <div class="stat-label">Topluluk Desteği</div>
+            </div>
+          </div>
+          
+          <!-- Infinite Tech Stack Ticker -->
+          <div class="tech-ticker-wrapper reveal-on-scroll">
+            <div class="tech-ticker">
+              <div class="tech-track">
+                <!-- Repeated twice for infinite loop effect -->
+                <div class="tech-item">Python</div>
+                <div class="tech-item">Flask</div>
+                <div class="tech-item">SQLite</div>
+                <div class="tech-item">HTML5</div>
+                <div class="tech-item">CSS3</div>
+                <div class="tech-item">JavaScript</div>
+                <div class="tech-item">Git</div>
+                <div class="tech-item">GitHub</div>
+                <div class="tech-item">VS Code</div>
+                
+                <div class="tech-item">Python</div>
+                <div class="tech-item">Flask</div>
+                <div class="tech-item">SQLite</div>
+                <div class="tech-item">HTML5</div>
+                <div class="tech-item">CSS3</div>
+                <div class="tech-item">JavaScript</div>
+                <div class="tech-item">Git</div>
+                <div class="tech-item">GitHub</div>
+                <div class="tech-item">VS Code</div>
+              </div>
+            </div>
+          </div>
+
           <div id="portfolio-overview" class="portfolio-overview"></div>
           </section>
         <section id="profile" class="tab-content card">
@@ -139,6 +205,8 @@
     </main>
   </div>
 
-  <script src="/static/js/portfolio.js?v=2"></script>
+  <div id="toast-container"></div>
+
+  <script src="/static/js/portfolio.js?v=3"></script>
 </body>
 </html>

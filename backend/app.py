@@ -13,6 +13,7 @@ from routes.cv_routes import cv_bp
 from routes.auth_routes import auth_bp
 from routes.message_routes import message_bp
 from routes.analytics_routes import analytics_bp
+from routes.likes_routes import likes_bp
 
 app = Flask(__name__, template_folder='../frontend/templates', static_folder='../frontend/static')
 
@@ -39,6 +40,7 @@ app.register_blueprint(cv_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(message_bp)
 app.register_blueprint(analytics_bp)
+app.register_blueprint(likes_bp)
 
 app.teardown_appcontext(close_db)
 ensure_database()
@@ -51,7 +53,7 @@ def csrf_protect():
         
     if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
         # Bypassing public endpoint
-        if request.path == '/api/messages' and request.method == 'POST':
+        if request.path in ['/api/messages', '/api/like-portfolio'] and request.method == 'POST':
             return
         
         token = session.get('csrf_token')
@@ -73,8 +75,13 @@ def security_headers(response):
             and request.path == '/'
         ):
             from services.analytics_service import record_visit
+            real_ip = request.environ.get('HTTP_X_FORWARDED_FOR') or request.environ.get('REMOTE_ADDR') or '0.0.0.0'
+            # If multiple IPs are present in X-Forwarded-For, get the first one (the original client)
+            if ',' in real_ip:
+                real_ip = real_ip.split(',')[0].strip()
+            
             record_visit(
-                ip=request.remote_addr or '0.0.0.0',
+                ip=real_ip,
                 path=request.path,
                 user_agent=request.headers.get('User-Agent', ''),
                 referrer=request.headers.get('Referer', ''),

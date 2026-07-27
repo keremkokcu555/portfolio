@@ -122,9 +122,9 @@ def record_visit(ip: str, path: str, user_agent: str, referrer: str) -> None:
         db = get_db()
         db.execute(
             '''INSERT INTO visitor_analytics
-               (visitor_hash, visited_at, path, device_type, browser, os, referrer)
-               VALUES (?, ?, ?, ?, ?, ?, ?)''',
-            (v_hash, now, path, parsed['device_type'], parsed['browser'], parsed['os'], ref)
+               (visitor_hash, visited_at, path, device_type, browser, os, referrer, ip_address)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+            (v_hash, now, path, parsed['device_type'], parsed['browser'], parsed['os'], ref, ip)
         )
         db.commit()
     except Exception:
@@ -221,7 +221,7 @@ def get_recent_visits(limit: int = 20) -> list:
     """Son N ziyaret — anonim (visitor_hash gösterilmez)."""
     db = get_db()
     rows = db.execute(
-        """SELECT visited_at, path, device_type, browser, os, referrer
+        """SELECT visited_at, path, device_type, browser, os, referrer, ip_address
            FROM visitor_analytics
            ORDER BY id DESC
            LIMIT ?""",

@@ -33,6 +33,14 @@ def ensure_database():
                 cursor.execute("ALTER TABLE profile ADD COLUMN cv_pdf TEXT")
         except Exception:
             pass
+    # Ensure ip_address column exists in visitor_analytics (migration for existing DBs)
+    try:
+        cursor.execute("PRAGMA table_info(visitor_analytics)")
+        cols = [row[1] for row in cursor.fetchall()]
+        if 'ip_address' not in cols:
+            cursor.execute("ALTER TABLE visitor_analytics ADD COLUMN ip_address TEXT")
+    except Exception:
+        pass
     # Ensure new timestamp columns exist on existing tables
     tables_with_timestamps = [
         'education', 'courses', 'certificates',

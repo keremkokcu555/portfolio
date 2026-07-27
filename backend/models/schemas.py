@@ -157,10 +157,21 @@ CREATE TABLE IF NOT EXISTS visitor_analytics (
     device_type  TEXT,
     browser      TEXT,
     os           TEXT,
-    referrer     TEXT
+    referrer     TEXT,
+    ip_address   TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_analytics_visited_at   ON visitor_analytics(visited_at);
 CREATE INDEX IF NOT EXISTS idx_analytics_visitor_hash ON visitor_analytics(visitor_hash);
+'''
+
+PORTFOLIO_LIKES_SCHEMA = '''
+CREATE TABLE IF NOT EXISTS portfolio_likes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    email       TEXT UNIQUE NOT NULL,
+    name        TEXT,
+    profile_pic TEXT,
+    liked_at    TEXT DEFAULT (datetime('now', 'localtime'))
+);
 '''
 
 SCHEMA_SQL = (
@@ -175,6 +186,7 @@ SCHEMA_SQL = (
     + ADMINS_SCHEMA
     + MESSAGES_SCHEMA
     + VISITOR_ANALYTICS_SCHEMA
+    + PORTFOLIO_LIKES_SCHEMA
 )
 
 REQUIRED_FIELDS = {

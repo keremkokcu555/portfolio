@@ -17,6 +17,8 @@ const activateTab = (target) => {
     loadDailyStats(7);
     loadAnalyticsBreakdown();
     loadRecentVisits();
+  } else if (target === 'likes') {
+    loadLikes();
   }
 };
 
@@ -734,7 +736,7 @@ const loadRecentVisits = async () => {
   try {
     const data = await fetchJson(`${apiBase}/analytics/recent?limit=20`);
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:12px; color:#64748b;">Henüz ziyaret yok.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:12px; color:#64748b;">Henüz ziyaret yok.</td></tr>';
       return;
     }
     const fmt = (iso) => {
@@ -746,6 +748,7 @@ const loadRecentVisits = async () => {
     tbody.innerHTML = data.map(r => `
       <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
         <td style="padding:5px 8px; white-space:nowrap;">${fmt(r.visited_at)}</td>
+        <td style="padding:5px 8px;">${escapeHtml(r.ip_address || 'Bilinmiyor')}</td>
         <td style="padding:5px 8px;">${escapeHtml(r.device_type)}</td>
         <td style="padding:5px 8px;">${escapeHtml(r.browser)}</td>
         <td style="padding:5px 8px;">${escapeHtml(r.os)}</td>
@@ -753,7 +756,7 @@ const loadRecentVisits = async () => {
       </tr>
     `).join('');
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:12px; color:#f87171;">Hata oluştu.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:12px; color:#f87171;">Hata oluştu.</td></tr>';
   }
 };
 
@@ -792,3 +795,35 @@ window.pruneAnalytics = async () => {
     btn.textContent = 'Sil';
   }
 };
+
+const loadLikes = async () => {
+  const tbody = document.getElementById('likes-body');
+  if (!tbody) return;
+  try {
+    const data = await fetchJson(`${apiBase}/portfolio-likes`);
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:#64748b;">Henüz beğeni yok.</td></tr>';
+      return;
+    }
+    const fmt = (iso) => {
+      const d = new Date(iso + 'Z');
+      return isNaN(d) ? iso : d.toLocaleString('tr-TR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    };
+    const escapeHtml = (unsafe) => (unsafe || '').toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    
+    tbody.innerHTML = data.map(r => `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+        <td style="padding:8px; display:flex; align-items:center; gap:10px;">
+          <img src="${escapeHtml(r.profile_pic)}" alt="avatar" style="width:32px; height:32px; border-radius:50%; object-fit:cover; background:#1e293b;">
+          <span>${escapeHtml(r.name)}</span>
+        </td>
+        <td style="padding:8px;">${escapeHtml(r.email)}</td>
+        <td style="padding:8px;">${fmt(r.liked_at)}</td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:#f87171;">Hata oluştu.</td></tr>';
+  }
+};
+
+initAdmin();
