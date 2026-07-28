@@ -655,6 +655,7 @@ const renderOverview = (data, profile) => {
     });
   }, { threshold: 0.1 });
   
+  window.portfolioScrollObserver = observer;
   document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
 
   // Stats Counter Animation
@@ -781,8 +782,8 @@ window.fetchBlogs = async () => {
 
         const section = document.createElement('div');
         section.id = 'blog-section';
-        section.className = 'editorial-section reveal-on-scroll is-visible';
-        section.innerHTML = `<h2 class="section-title"><span class="section-number">10.</span> YAZILAR & İÇERİKLER</h2>`;
+        section.className = 'editorial-section reveal-on-scroll';
+        section.innerHTML = `<h2 class="editorial-title reveal-on-scroll">BLOG</h2>`;
         
         const grid = document.createElement('div');
         grid.className = 'bento-grid';
@@ -795,7 +796,7 @@ window.fetchBlogs = async () => {
             
             const card = document.createElement('a');
             card.href = `/blog/${blog.slug}`;
-            card.className = 'bento-box';
+            card.className = 'bento-box reveal-on-scroll';
             card.style.cssText = 'display: flex; flex-direction: column; justify-content: space-between; height: 100%; text-decoration: none; box-sizing: border-box; padding: 24px; min-height: 380px;';
             
             const topContainer = document.createElement('div');
@@ -877,6 +878,14 @@ window.fetchBlogs = async () => {
         
         container.innerHTML = '';
         container.appendChild(section);
+        
+        // Dinamik eklenen elementleri scroll observer'a kaydet (Aşama 7 Animasyon)
+        if (window.portfolioScrollObserver) {
+            window.portfolioScrollObserver.observe(section);
+            section.querySelectorAll('.reveal-on-scroll').forEach(el => {
+                window.portfolioScrollObserver.observe(el);
+            });
+        }
         
     } catch (err) {
         console.error('Blog verileri çekilirken hata:', err);

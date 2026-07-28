@@ -270,8 +270,7 @@ const loadBlogs = async () => {
     container.innerHTML = '';
     blogs.forEach(blog => {
       const card = document.createElement('div');
-      card.className = 'list-item';
-      card.style.cssText = 'display: flex; flex-direction: column; gap: 8px; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05);';
+      card.className = 'blog-admin-card';
       
       const titleEl = document.createElement('div');
       titleEl.style.cssText = 'font-weight: bold; font-size: 1.1em; color: #fff; display: flex; align-items: center; gap: 10px;';

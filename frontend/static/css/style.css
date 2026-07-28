@@ -1056,6 +1056,25 @@ body.visitor-mode .card h2 {
   text-transform: uppercase;
   letter-spacing: 1.5px;
   width: fit-content;
+}
+
+/* Kurs/İçerik Yönetim Modülü Estetiği (Aşama 7) */
+.blog-admin-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin-bottom: 15px;
+    transition: all 0.2s ease;
+}
+.blog-admin-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 
