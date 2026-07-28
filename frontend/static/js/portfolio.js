@@ -56,6 +56,24 @@ window.handleGoogleLogin = async (response) => {
   }
 };
 
+window.handleVisitorLogout = async () => {
+    try {
+        const res = await fetch('/api/auth/visitor/logout', { method: 'POST' });
+        if (res.ok) {
+            showToast('Çıkış yapıldı', 'success');
+            checkVisitorStatus();
+            if (typeof loadComments === 'function') {
+                loadComments();
+            }
+            if (typeof window.loadBlogLikes === 'function') {
+                window.loadBlogLikes();
+            }
+        }
+    } catch (e) {
+        console.error('Logout error:', e);
+    }
+};
+
 const navButtons = document.querySelectorAll('.top-nav .nav-link[data-target]');
 const mobileToggle = document.querySelector('.navbar-toggle');
 const topNav = document.querySelector('.top-nav');
@@ -254,6 +272,7 @@ const loadData = async () => {
   
   if (isVisitor) {
     renderOverview({ education, courses, certificates, experiences, projects, skills, languages }, profileData);
+    fetchBlogs();
   }
 };
 
@@ -568,6 +587,10 @@ const renderOverview = (data, profile) => {
     overview.innerHTML += langHtml;
   }
   
+  // 9.5 DİNAMİK BLOG SİSTEMİ
+  overview.innerHTML += hr();
+  overview.innerHTML += `<div id="blog-section-container"></div>`;
+
   // 10. İLETİŞİM FORMU
   overview.innerHTML += hr();
   let contactHtml = `<div id="contact-section" class="editorial-section reveal-on-scroll">`;
@@ -743,5 +766,413 @@ if (logoutBtn) {
 }
 
 
+// BLOG FUNCTIONS FOR VISITOR
+window.fetchBlogs = async () => {
+    const container = document.getElementById('blog-section-container');
+    if (!container) return;
+    
+    try {
+        const res = await fetch('/api/blog');
+        const blogs = await res.json();
+        
+        if (blogs.length === 0) {
+            return; // Don't show blog section if no published blogs
+        }
+
+        const section = document.createElement('div');
+        section.id = 'blog-section';
+        section.className = 'editorial-section reveal-on-scroll is-visible';
+        section.innerHTML = `<h2 class="section-title"><span class="section-number">10.</span> YAZILAR & İÇERİKLER</h2>`;
+        
+        const grid = document.createElement('div');
+        grid.className = 'bento-grid';
+        grid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; width: 100%; margin-top: 20px; padding: 0; box-sizing: border-box;';
+        
+        const maxBlogs = 4;
+        
+        const createBlogCard = (blog) => {
+            const date = blog.published_at ? new Date(blog.published_at).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+            
+            const card = document.createElement('a');
+            card.href = `/blog/${blog.slug}`;
+            card.className = 'bento-box';
+            card.style.cssText = 'display: flex; flex-direction: column; justify-content: space-between; height: 100%; text-decoration: none; box-sizing: border-box; padding: 24px; min-height: 380px;';
+            
+            const topContainer = document.createElement('div');
+            topContainer.style.cssText = 'display: flex; flex-direction: column; width: 100%;';
+            
+            if (blog.cover_image) {
+                const img = document.createElement('img');
+                img.src = blog.cover_image;
+                img.alt = 'Blog Cover';
+                img.style.cssText = 'width: 100%; height: 180px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05);';
+                img.onerror = () => { img.style.display = 'none'; };
+                topContainer.appendChild(img);
+            }
+            
+            const headerRow = document.createElement('div');
+            headerRow.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-wrap: wrap; width: 100%;';
+            
+            const badge = document.createElement('span');
+            badge.className = 'badge secondary';
+            const firstTag = blog.tags ? blog.tags.split(',')[0].trim() : 'Genel';
+            badge.textContent = firstTag || 'Genel';
+            
+            const dateSpan = document.createElement('small');
+            dateSpan.style.cssText = 'color: #94a3b8; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;';
+            dateSpan.innerHTML = `${date} <span style="color: #00c3ff; display: inline-flex; align-items: center; gap: 3px;" aria-label="${blog.like_count || 0} beğeni">♥ ${blog.like_count || 0}</span> <span style="color: #8b949e; display: inline-flex; align-items: center; gap: 3px;" aria-label="${blog.view_count || 0} görüntülenme">👁 ${blog.view_count || 0}</span>`;
+            
+            headerRow.appendChild(badge);
+            headerRow.appendChild(dateSpan);
+            topContainer.appendChild(headerRow);
+            
+            const title = document.createElement('h3');
+            title.style.cssText = 'font-size: 1.3rem; margin: 0 0 10px 0; color: #fff; line-height: 1.4; word-wrap: break-word; overflow-wrap: break-word; font-weight: 700;';
+            title.textContent = blog.title;
+            topContainer.appendChild(title);
+            
+            if (blog.summary) {
+                const summary = document.createElement('p');
+                summary.style.cssText = 'color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; margin: 0 0 15px 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; word-wrap: break-word;';
+                summary.textContent = blog.summary;
+                topContainer.appendChild(summary);
+            }
+            
+            card.appendChild(topContainer);
+            
+            const readMore = document.createElement('div');
+            readMore.style.cssText = 'margin-top: auto; color: var(--accent); font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; padding-top: 10px;';
+            readMore.textContent = 'Devamını Oku →';
+            card.appendChild(readMore);
+            
+            return card;
+        };
+
+        const blogsToShow = blogs.slice(0, maxBlogs);
+        blogsToShow.forEach(blog => {
+            grid.appendChild(createBlogCard(blog));
+        });
+        
+        section.appendChild(grid);
+        
+        if (blogs.length > maxBlogs) {
+            const moreBtnContainer = document.createElement('div');
+            moreBtnContainer.style.cssText = 'display: flex; justify-content: center; margin-top: 30px;';
+            
+            const moreBtn = document.createElement('button');
+            moreBtn.className = 'badge primary';
+            moreBtn.style.cssText = 'padding: 10px 20px; font-size: 1rem; border: none; cursor: pointer; text-decoration: none;';
+            moreBtn.textContent = 'Tüm Yazıları Gör';
+            moreBtn.onclick = (e) => {
+                e.preventDefault();
+                moreBtnContainer.style.display = 'none';
+                const remainingBlogs = blogs.slice(maxBlogs);
+                remainingBlogs.forEach(blog => {
+                    grid.appendChild(createBlogCard(blog));
+                });
+            };
+            moreBtnContainer.appendChild(moreBtn);
+            section.appendChild(moreBtnContainer);
+        }
+        
+        container.innerHTML = '';
+        container.appendChild(section);
+        
+    } catch (err) {
+        console.error('Blog verileri çekilirken hata:', err);
+    }
+};
+
 // Start loading data
 loadData().catch((error) => console.error(error));
+
+// ==================================================
+// BLOG YORUM SİSTEMİ (AŞAMA 4)
+// ==================================================
+
+const loadComments = async () => {
+    if (!window.BLOG_SLUG) return;
+    try {
+        const res = await fetch(`/api/blog/${window.BLOG_SLUG}/comments`);
+        if (res.ok) {
+            const comments = await res.json();
+            const listEl = document.getElementById('comments-list');
+            const countEl = document.getElementById('comments-count');
+            
+            if (countEl) countEl.textContent = comments.length;
+            
+            if (!listEl) return;
+            
+            listEl.innerHTML = '';
+            
+            if (comments.length === 0) {
+                listEl.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">Henüz yorum yapılmamış. İlk yorumu siz yapın.</div>';
+                return;
+            }
+            
+            comments.forEach(c => {
+                const card = document.createElement('div');
+                card.style.cssText = 'padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 12px;';
+                
+                const header = document.createElement('div');
+                header.style.cssText = 'display: flex; gap: 12px; align-items: center; margin-bottom: 4px;';
+                
+                const img = document.createElement('img');
+                img.src = c.profile_image || '/static/favicon.svg';
+                img.style.cssText = 'width: 32px; height: 32px; border-radius: 50%; object-fit: cover;';
+                
+                const nameInfo = document.createElement('div');
+                const nameSpan = document.createElement('div');
+                nameSpan.style.cssText = 'color: #fff; font-weight: bold; font-size: 0.95rem;';
+                nameSpan.textContent = c.display_name;
+                
+                const dateSpan = document.createElement('div');
+                dateSpan.style.cssText = 'color: #64748b; font-size: 0.8rem; margin-top: 2px;';
+                const d = new Date(c.created_at);
+                dateSpan.textContent = d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                
+                nameInfo.appendChild(nameSpan);
+                nameInfo.appendChild(dateSpan);
+                
+                header.appendChild(img);
+                header.appendChild(nameInfo);
+                
+                const content = document.createElement('div');
+                content.style.cssText = 'color: #cbd5e1; font-size: 1rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word;';
+                content.textContent = c.content;
+                
+                const likeContainer = document.createElement('div');
+                likeContainer.style.cssText = 'display: flex; align-items: center; margin-top: 4px;';
+                
+                const likeBtn = document.createElement('button');
+                likeBtn.className = 'badge';
+                likeBtn.style.cssText = 'background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.05); color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; padding: 6px 12px; border-radius: 20px; transition: all 0.2s ease;';
+                likeBtn.setAttribute('aria-label', c.liked ? 'Yorum beğenisini kaldır' : 'Yorumu beğen');
+                
+                const heart = document.createElement('span');
+                heart.textContent = c.liked ? '♥' : '♡';
+                heart.style.cssText = 'font-size: 1.1rem; line-height: 1;';
+                if (c.liked) heart.style.color = '#00c3ff';
+                
+                const count = document.createElement('span');
+                count.textContent = c.like_count || 0;
+                
+                likeBtn.appendChild(heart);
+                likeBtn.appendChild(count);
+                
+                likeBtn.onclick = async () => {
+                    likeBtn.disabled = true;
+                    const method = c.liked ? 'DELETE' : 'POST';
+                    try {
+                        const lRes = await fetch(`/api/blog/comments/${c.id}/likes`, { method });
+                        const lData = await lRes.json();
+                        if (lRes.ok) {
+                            c.liked = !c.liked;
+                            c.like_count = lData.count;
+                            heart.textContent = c.liked ? '♥' : '♡';
+                            heart.style.color = c.liked ? '#00c3ff' : '';
+                            count.textContent = lData.count;
+                            likeBtn.setAttribute('aria-label', c.liked ? 'Yorum beğenisini kaldır' : 'Yorumu beğen');
+                        } else {
+                            showToast(lData.error || 'İşlem gerçekleştirilemedi.', 'error');
+                        }
+                    } catch (err) {
+                        showToast('Bağlantı hatası.', 'error');
+                    } finally {
+                        likeBtn.disabled = false;
+                    }
+                };
+                
+                likeContainer.appendChild(likeBtn);
+                
+                card.appendChild(header);
+                card.appendChild(content);
+                card.appendChild(likeContainer);
+                listEl.appendChild(card);
+            });
+        }
+    } catch (e) {
+        console.error('Yorumlar yüklenirken hata:', e);
+        const listEl = document.getElementById('comments-list');
+        if (listEl) listEl.innerHTML = '<div style="color: #f87171; text-align: center; padding: 20px;">Yorumlar yüklenemedi.</div>';
+    }
+};
+
+const checkVisitorStatus = async () => {
+    if (!window.BLOG_SLUG) return;
+    try {
+        const res = await fetch('/api/auth/visitor/status');
+        const data = await res.json();
+        
+        const loginPrompt = document.getElementById('comment-login-prompt');
+        const composeSection = document.getElementById('comment-compose-section');
+        
+        if (data.logged_in) {
+            if (loginPrompt) loginPrompt.style.display = 'none';
+            if (composeSection) composeSection.style.display = 'block';
+            
+            const avatar = document.getElementById('current-user-avatar');
+            const name = document.getElementById('current-user-name');
+            if (avatar) avatar.src = data.user.profile_image || '/static/favicon.svg';
+            if (name) name.textContent = data.user.display_name;
+        } else {
+            if (loginPrompt) loginPrompt.style.display = 'block';
+            if (composeSection) composeSection.style.display = 'none';
+        }
+    } catch (e) {
+        console.error('Visitor status error:', e);
+    }
+};
+
+window.handleCommentGoogleLogin = async (response) => {
+    showToast('Giriş yapılıyor...', 'info');
+    try {
+        const res = await fetch('/api/auth/visitor/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential: response.credential })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('Giriş başarılı!', 'success');
+            checkVisitorStatus();
+            if (typeof loadComments === 'function') {
+                loadComments();
+            }
+            if (typeof window.loadBlogLikes === 'function') {
+                window.loadBlogLikes();
+            }
+        } else {
+            showToast(data.error || 'Giriş başarısız', 'error');
+        }
+    } catch (e) {
+        showToast('Bağlantı hatası', 'error');
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.BLOG_SLUG) {
+        if (window.PREVIEW_MODE) {
+            const listEl = document.getElementById('comments-list');
+            if (listEl) {
+                listEl.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">Yorumlar önizleme modunda gösterilmez.</div>';
+            }
+            const countEl = document.getElementById('comments-count');
+            if (countEl) countEl.textContent = '0';
+            
+            const blogLikeCount = document.getElementById('blog-like-count');
+            if (blogLikeCount) blogLikeCount.textContent = '0';
+            return;
+        }
+
+        loadComments();
+        checkVisitorStatus();
+        
+        const commentForm = document.getElementById('comment-form');
+        const commentInput = document.getElementById('comment-input');
+        const charCount = document.getElementById('comment-char-count');
+        const submitBtn = document.getElementById('submit-comment-btn');
+        
+        if (commentInput && charCount) {
+            commentInput.addEventListener('input', () => {
+                charCount.textContent = `${commentInput.value.length} / 2000`;
+            });
+        }
+        
+        if (commentForm) {
+            commentForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const content = commentInput.value.trim();
+                if (!content) return;
+                
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Gönderiliyor...';
+                
+                try {
+                    const res = await fetch(`/api/blog/${window.BLOG_SLUG}/comments`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content })
+                    });
+                    const data = await res.json();
+                    
+                    if (res.ok) {
+                        showToast(data.message || 'Yorum eklendi', 'success');
+                        commentInput.value = '';
+                        if (charCount) charCount.textContent = '0 / 2000';
+                        loadComments();
+                    } else {
+                        showToast(data.error || 'Yorum eklenemedi', 'error');
+                    }
+                } catch (err) {
+                    showToast('Bağlantı hatası', 'error');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Gönder';
+                }
+            });
+        }
+
+        // Setup Blog post likes (Aşama 5)
+        const blogLikeBtn = document.getElementById('blog-like-btn');
+        const blogLikeIcon = document.getElementById('blog-like-icon');
+        const blogLikeText = document.getElementById('blog-like-text');
+        const blogLikeCount = document.getElementById('blog-like-count');
+        
+        let blogLiked = false;
+        
+        window.loadBlogLikes = async () => {
+            if (!blogLikeBtn) return;
+            try {
+                const lRes = await fetch(`/api/blog/${window.BLOG_SLUG}/likes`);
+                if (lRes.ok) {
+                    const lData = await lRes.json();
+                    blogLiked = lData.liked;
+                    if (blogLikeCount) blogLikeCount.textContent = lData.count;
+                    
+                    if (blogLikeIcon) {
+                        blogLikeIcon.textContent = blogLiked ? '♥' : '♡';
+                        blogLikeIcon.style.color = blogLiked ? '#00c3ff' : '';
+                    }
+                    if (blogLikeText) {
+                        blogLikeText.textContent = blogLiked ? 'Beğenildi' : 'Beğen';
+                    }
+                    blogLikeBtn.setAttribute('aria-label', blogLiked ? 'Blog yazısı beğenisini kaldır' : 'Blog yazısını beğen');
+                }
+            } catch (err) {
+                console.error('Blog beğenileri yüklenirken hata:', err);
+            }
+        };
+        
+        if (blogLikeBtn) {
+            window.loadBlogLikes();
+            
+            blogLikeBtn.onclick = async () => {
+                blogLikeBtn.disabled = true;
+                const method = blogLiked ? 'DELETE' : 'POST';
+                try {
+                    const lRes = await fetch(`/api/blog/${window.BLOG_SLUG}/likes`, { method });
+                    const lData = await lRes.json();
+                    if (lRes.ok) {
+                        blogLiked = !blogLiked;
+                        if (blogLikeCount) blogLikeCount.textContent = lData.count;
+                        if (blogLikeIcon) {
+                            blogLikeIcon.textContent = blogLiked ? '♥' : '♡';
+                            blogLikeIcon.style.color = blogLiked ? '#00c3ff' : '';
+                        }
+                        if (blogLikeText) {
+                            blogLikeText.textContent = blogLiked ? 'Beğenildi' : 'Beğen';
+                        }
+                        blogLikeBtn.setAttribute('aria-label', blogLiked ? 'Blog yazısı beğenisini kaldır' : 'Blog yazısını beğen');
+                    } else {
+                        showToast(lData.error || 'İşlem gerçekleştirilemedi.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Bağlantı hatası.', 'error');
+                } finally {
+                    blogLikeBtn.disabled = false;
+                }
+            };
+        }
+    }
+});

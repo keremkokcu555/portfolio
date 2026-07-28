@@ -31,6 +31,9 @@
             <li class="nav-item"><button class="nav-link" data-target="projects">Projeler</button></li>
             <li class="nav-item"><button class="nav-link" data-target="skills">Yetenekler</button></li>
             <li class="nav-item"><button class="nav-link" data-target="languages">Diller</button></li>
+            <li class="nav-item"><button class="nav-link" data-target="blogs">Blog/İçerik</button></li>
+            <li class="nav-item"><button class="nav-link" data-target="comments">Yorumlar</button></li>
+
             <li class="nav-item"><button class="nav-link" data-target="messages">Gelen Mesajlar <span id="nav-unread-badge" style="display:none; background:#ef4444; color:white; border-radius:50%; padding:2px 6px; font-size:12px; margin-left:5px;">0</span></button></li>
             
             <li class="nav-item"><button class="nav-link" data-target="analytics">📊 Analitik</button></li>
@@ -510,6 +513,88 @@
           </div>
         </section>
 
+        
+        <!-- ── Blog/İçerik Sekmesi ─────────────────────────── -->
+        <section id="blogs" class="tab-content card">
+          <h2>Blog / İçerik Yönetimi</h2>
+          <div class="tab-description">Blog yazılarınızı buradan ekleyebilir, düzenleyebilir ve yayın durumunu kontrol edebilirsiniz.</div>
+          
+          <div class="tab-row">
+            <!-- Form Bölümü -->
+            <form id="blogs-form" class="data-form">
+              <input name="id" type="hidden" />
+              
+              <div class="field-row full-width">
+                <label>Başlık *</label>
+                <input name="title" type="text" placeholder="Blog Yazısı Başlığı" required />
+              </div>
+              
+              <div class="field-row full-width">
+                <label>Kısa Özet</label>
+                <textarea name="summary" rows="2" placeholder="Yazının kısa özeti (isteğe bağlı)"></textarea>
+              </div>
+              
+              <div class="field-row full-width">
+                <label>İçerik * (Düz Metin)</label>
+                <textarea name="content" rows="12" placeholder="Blog içeriğini buraya yazın..." required></textarea>
+              </div>
+              
+              <div class="field-row full-width">
+                <label>Etiketler</label>
+                <input name="tags" type="text" placeholder="Örn: Python, Web, API" />
+              </div>
+              
+              <div class="field-row full-width">
+                <label>Durum</label>
+                <select name="status" style="width:100%; padding: 10px; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                  <option value="draft">Taslak (Draft)</option>
+                  <option value="published">Yayında (Published)</option>
+                </select>
+              </div>
+              
+              <div class="field-row full-width">
+                <label>Kapak Görseli (İsteğe Bağlı)</label>
+                <input name="cover_image_file" type="file" accept="image/png, image/jpeg, image/jpg, image/webp" />
+                <input name="cover_image" type="hidden" />
+                <div id="preview-blogs-cover_image" style="margin-bottom: 10px; font-size: 0.9em; color: #a5b4fc;"></div>
+                <button type="button" id="delete-blogs-cover_image-btn" style="display:none; margin-bottom: 8px; background: transparent; border: 1px solid #f87171; color: #f87171; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82em; transition: background 0.2s, color 0.2s;" onmouseover="this.style.background='#f87171';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='#f87171'" onclick="deleteFile('blog_posts', document.getElementById('blogs-form').querySelector('[name=id]').value, 'cover_image', 'preview-blogs-cover_image', 'delete-blogs-cover_image-btn')">🗑 Kapak Görselini Sil</button>
+              </div>
+              
+              <div style="display: flex; gap: 10px;">
+                <button type="submit" class="primary" style="flex:1;">Kaydet</button>
+                <button type="button" id="btn-blogs-cancel" style="background: rgba(255,255,255,0.1); color: #fff; padding: 10px 15px; border-radius: 6px; cursor: pointer; display: none;" onclick="resetBlogForm()">İptal</button>
+              </div>
+            </form>
+            
+            <!-- Liste Bölümü -->
+            <div class="list-card card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;">Mevcut Yazılar</h3>
+                <button type="button" onclick="resetBlogForm()" style="background: #10b981; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9em; font-weight: 500;">+ Yeni Yazı</button>
+              </div>
+              <div id="blogs-list">
+                <div style="color: #94a3b8; font-size: 0.9em; text-align: center; padding: 20px;">Yükleniyor...</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Yorum Yönetimi Sekmesi ─────────────────────────── -->
+        <section id="comments" class="tab-content card">
+          <h2>Yorum Yönetimi</h2>
+          <div class="tab-description">Blog yazılarına yapılan yorumları buradan inceleyebilir, gizleyebilir veya silebilirsiniz.</div>
+          <div class="tab-row" style="flex-direction: column;">
+            <div class="list-card card" style="width: 100%;">
+              <h3>Tüm Yorumlar</h3>
+              <div id="admin-comments-list" style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="text-align: center; color: #64748b; padding: 20px;">Yorumlar yükleniyor...</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+
         <!-- ── Ziyaretçi Analitiği Sekmesi ─────────────────────────── -->
         <section id="analytics" class="tab-content card">
           <h2>Ziyaretçi Analitiği</h2>
@@ -683,6 +768,6 @@
     </main>
   </div>
 
-  <script src="/static/js/admin.js?v=1784816278"></script>
+  <script src="/static/js/admin.js?v=202607281042"></script>
 </body>
 </html>

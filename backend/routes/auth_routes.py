@@ -66,3 +66,31 @@ def logout():
 def status():
     is_logged_in = session.get('admin_logged_in') == True
     return jsonify({'logged_in': is_logged_in}), 200
+
+from services.google_auth import verify_google_token
+
+@auth_bp.route('/api/auth/visitor/login', methods=['POST'])
+def visitor_login():
+    data = request.get_json() or {}
+    token = data.get('credential')
+    if not token:
+        return jsonify({'error': 'Token eksik'}), 400
+
+    is_valid, user_info = verify_google_token(token)
+    if not is_valid:
+        return jsonify({'error': user_info}), 401
+
+    session['visitor'] = user_info
+    return jsonify({'success': True, 'message': 'Ziyaretçi girişi başarılı', 'user': user_info}), 200
+
+@auth_bp.route('/api/auth/visitor/logout', methods=['POST'])
+def visitor_logout():
+    session.pop('visitor', None)
+    return jsonify({'success': True, 'message': 'Çıkış yapıldı'}), 200
+
+@auth_bp.route('/api/auth/visitor/status', methods=['GET'])
+def visitor_status():
+    visitor = session.get('visitor')
+    if visitor:
+        return jsonify({'logged_in': True, 'user': visitor}), 200
+    return jsonify({'logged_in': False}), 200

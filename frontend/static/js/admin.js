@@ -1,5 +1,24 @@
 const apiBase = '/api';
 
+const showToast = (message, type = 'success') => {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span>${message}</span>
+  `;
+  container.appendChild(toast);
+  
+  setTimeout(() => toast.classList.add('show'), 10);
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+};
+
 const navButtons = document.querySelectorAll('.top-nav .nav-link[data-target]');
 const mobileToggle = document.querySelector('.navbar-toggle');
 const topNav = document.querySelector('.top-nav');
@@ -236,6 +255,238 @@ const deleteFile = async (table, itemId, field, previewId, btnId) => {
 const deleteProfilePhoto = () => deleteFile('profile', null, 'profile_photo', 'preview-profile_photo', 'delete-profile-photo-btn');
 
 
+// BLOG FONKSİYONLARI (AŞAMA 2)
+const loadBlogs = async () => {
+  const container = document.getElementById('blogs-list');
+  if (!container) return;
+  container.innerHTML = '<div style="color: #94a3b8; font-size: 0.9em; text-align: center; padding: 20px;">Yükleniyor...</div>';
+  try {
+    const res = await fetch('/api/admin/blog');
+    const blogs = await res.json();
+    if (blogs.length === 0) {
+      container.innerHTML = '<div style="color: #94a3b8; font-size: 0.9em; text-align: center; padding: 20px;">Henüz blog yazısı yok.</div>';
+      return;
+    }
+    container.innerHTML = '';
+    blogs.forEach(blog => {
+      const card = document.createElement('div');
+      card.className = 'list-item';
+      card.style.cssText = 'display: flex; flex-direction: column; gap: 8px; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05);';
+      
+      const titleEl = document.createElement('div');
+      titleEl.style.cssText = 'font-weight: bold; font-size: 1.1em; color: #fff; display: flex; align-items: center; gap: 10px;';
+      
+      const textSpan = document.createElement('span');
+      textSpan.textContent = blog.title;
+      titleEl.appendChild(textSpan);
+      
+      const badgeColor = blog.status === 'published' ? '#10b981' : '#f59e0b';
+      const badgeText = blog.status === 'published' ? 'Yayında' : 'Taslak';
+      const statusBadge = document.createElement('span');
+      statusBadge.style.cssText = `background: ${badgeColor}20; color: ${badgeColor}; padding: 3px 8px; border-radius: 4px; font-size: 0.75em; white-space: nowrap;`;
+      statusBadge.textContent = badgeText;
+      titleEl.appendChild(statusBadge);
+
+      const dateStr = blog.published_at ? new Date(blog.published_at).toLocaleString('tr-TR') : 'Yayınlanmadı';
+      
+      const actionsEl = document.createElement('div');
+      actionsEl.style.cssText = 'display: flex; gap: 8px; margin-top: 5px; flex-wrap: wrap;';
+      
+      const btnEdit = document.createElement('button');
+      btnEdit.className = 'btn secondary';
+      btnEdit.style.padding = '4px 10px';
+      btnEdit.style.fontSize = '0.85em';
+      btnEdit.textContent = 'Düzenle';
+      btnEdit.onclick = () => window.editBlog(blog);
+      
+      const btnToggle = document.createElement('button');
+      btnToggle.className = 'btn';
+      btnToggle.style.padding = '4px 10px';
+      btnToggle.style.fontSize = '0.85em';
+      btnToggle.style.background = blog.status === 'published' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)';
+      btnToggle.style.color = blog.status === 'published' ? '#f59e0b' : '#10b981';
+      btnToggle.style.border = `1px solid ${btnToggle.style.color}`;
+      btnToggle.textContent = blog.status === 'published' ? 'Yayından Kaldır' : 'Yayınla';
+      btnToggle.onclick = () => window.toggleBlogStatus(blog.id, blog.status);
+      
+      const btnPreview = document.createElement('a');
+      btnPreview.className = 'btn';
+      btnPreview.style.cssText = 'padding: 4px 10px; font-size: 0.85em; background: rgba(0, 195, 255, 0.1); color: #00c3ff; border: 1px solid #00c3ff; text-decoration: none; border-radius: 4px; text-align: center; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;';
+      btnPreview.href = `/admin/blog/${blog.id}/preview`;
+      btnPreview.target = '_blank';
+      btnPreview.setAttribute('rel', 'noopener noreferrer');
+      btnPreview.textContent = 'Önizle';
+      
+      const btnDelete = document.createElement('button');
+      btnDelete.className = 'btn danger';
+      btnDelete.style.padding = '4px 10px';
+      btnDelete.style.fontSize = '0.85em';
+      btnDelete.textContent = 'Sil';
+      btnDelete.onclick = () => window.deleteBlog(blog.id);
+
+      actionsEl.appendChild(btnEdit);
+      actionsEl.appendChild(btnPreview);
+      actionsEl.appendChild(btnToggle);
+      actionsEl.appendChild(btnDelete);
+
+      card.appendChild(titleEl);
+      const infoEl = document.createElement('div');
+      infoEl.style.cssText = 'font-size: 0.85em; color: #94a3b8; line-height: 1.4;';
+      infoEl.innerHTML = `<div><strong>Slug:</strong> ${blog.slug}</div><div><strong>Oluşturulma:</strong> ${new Date(blog.created_at).toLocaleString('tr-TR')}</div><div><strong>Yayınlanma:</strong> ${dateStr}</div><div><strong>Beğeni:</strong> <span style="color: #00c3ff;">♥ ${blog.like_count || 0}</span> &nbsp;&nbsp; <strong>Görüntülenme:</strong> <span style="color: #8b949e;">👁 ${blog.view_count || 0}</span></div>`;
+      card.appendChild(infoEl);
+      card.appendChild(actionsEl);
+
+      container.appendChild(card);
+    });
+  } catch (error) {
+    console.error('Bloglar yüklenirken hata:', error);
+    container.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Hata oluştu.</div>';
+  }
+};
+
+window.submitBlogForm = async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Kaydediliyor...';
+  
+  try {
+    let coverUrl = form.cover_image.value;
+    const fileInput = form.cover_image_file;
+    if (fileInput.files.length > 0) {
+      coverUrl = await uploadFile(fileInput.files[0], 'blog');
+    }
+    
+    const id = form.id.value;
+    const payload = {
+      title: form.title.value,
+      summary: form.summary.value,
+      content: form.content.value,
+      tags: form.tags.value,
+      status: form.status.value,
+      cover_image: coverUrl
+    };
+
+    const url = id ? `/api/admin/blog/${id}` : '/api/admin/blog';
+    const method = id ? 'PUT' : 'POST';
+
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = meta ? meta.getAttribute('content') : '';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message || 'Başarıyla kaydedildi.', 'success');
+      resetBlogForm();
+      loadBlogs(); 
+    } else {
+      showToast(data.error || 'Hata oluştu', 'error');
+    }
+  } catch (err) {
+    showToast(err.message || 'Sunucu hatası', 'error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
+};
+
+window.editBlog = (blog) => {
+  const form = document.getElementById('blogs-form');
+  form.id.value = blog.id;
+  form.title.value = blog.title;
+  form.summary.value = blog.summary || '';
+  form.content.value = blog.content;
+  form.tags.value = blog.tags || '';
+  form.status.value = blog.status;
+  form.cover_image.value = blog.cover_image || '';
+  
+  updatePreview('preview-blogs-cover_image', blog.cover_image);
+  
+  document.getElementById('btn-blogs-cancel').style.display = 'block';
+  document.getElementById('blogs').scrollIntoView({ behavior: 'smooth' });
+  const submitBtn = form.querySelector('button[type="submit"]');
+  submitBtn.textContent = 'Güncelle';
+};
+
+window.resetBlogForm = () => {
+  const form = document.getElementById('blogs-form');
+  form.reset();
+  form.id.value = '';
+  form.cover_image.value = '';
+  updatePreview('preview-blogs-cover_image', '');
+  
+  document.getElementById('btn-blogs-cancel').style.display = 'none';
+  const submitBtn = form.querySelector('button[type="submit"]');
+  submitBtn.textContent = 'Kaydet';
+};
+
+window.deleteBlog = async (id) => {
+  if (!confirm('Bu blog yazısını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.')) return;
+
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  const csrfToken = meta ? meta.getAttribute('content') : '';
+
+  try {
+    const res = await fetch(`/api/admin/blog/${id}`, {
+      method: 'DELETE',
+      headers: { 'X-CSRFToken': csrfToken }
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      showToast(data.message || 'Silindi', 'success');
+      loadBlogs();
+    } else {
+      showToast(data.error || 'Silme işlemi başarısız', 'error');
+    }
+  } catch (err) {
+    showToast('Sunucu hatası', 'error');
+  }
+};
+
+window.toggleBlogStatus = async (id, currentStatus) => {
+  const action = currentStatus === 'published' ? 'unpublish' : 'publish';
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  const csrfToken = meta ? meta.getAttribute('content') : '';
+
+  try {
+    const res = await fetch(`/api/admin/blog/${id}/${action}`, {
+      method: 'PATCH',
+      headers: { 'X-CSRFToken': csrfToken }
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message || 'Durum güncellendi', 'success');
+      loadBlogs();
+      const form = document.getElementById('blogs-form');
+      if (form && form.id.value == id) {
+        form.status.value = currentStatus === 'published' ? 'draft' : 'published';
+      }
+    } else {
+      showToast(data.error || 'İşlem başarısız', 'error');
+    }
+  } catch (err) {
+    showToast('Sunucu hatası', 'error');
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const blogForm = document.getElementById('blogs-form');
+  if (blogForm) {
+    blogForm.addEventListener('submit', window.submitBlogForm);
+  }
+});
+
 const loadData = async () => {
   if (!profileForm) {
     console.warn('Profile form not found');
@@ -287,6 +538,7 @@ const loadData = async () => {
   ]);
   
   await loadMessages();
+  await loadBlogs();
 };
 
 const loadMessages = async () => {
@@ -827,3 +1079,127 @@ const loadLikes = async () => {
 };
 
 initAdmin();
+
+
+// Removed custom blog methods because they are handled globally now
+
+// ==================================================
+// YORUM YÖNETİMİ (AŞAMA 4)
+// ==================================================
+
+const loadAdminComments = async () => {
+  try {
+    const res = await fetch('/api/admin/blog/comments');
+    if (res.ok) {
+      const comments = await res.json();
+      const listEl = document.getElementById('admin-comments-list');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+
+      if (comments.length === 0) {
+        listEl.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">Henüz yorum bulunmuyor.</div>';
+        return;
+      }
+
+      comments.forEach(c => {
+        const item = document.createElement('div');
+        item.style.cssText = 'padding: 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;';
+
+        const header = document.createElement('div');
+        header.style.cssText = 'display: flex; justify-content: space-between; align-items: center;';
+        
+        const info = document.createElement('div');
+        info.innerHTML = `<strong style="color: #fff;">${c.display_name}</strong> - <span style="color: #94a3b8; font-size: 0.9em;">Blog: ${c.blog_title}</span>`;
+        
+        const statusBadge = document.createElement('span');
+        statusBadge.className = 'badge';
+        if (c.status === 'published') {
+          statusBadge.style.cssText = 'background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 8px; font-size: 0.8rem;';
+          statusBadge.textContent = 'Yayında';
+        } else {
+          statusBadge.style.cssText = 'background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 4px 8px; font-size: 0.8rem;';
+          statusBadge.textContent = 'Gizli';
+        }
+        
+        header.appendChild(info);
+        header.appendChild(statusBadge);
+
+        const content = document.createElement('div');
+        content.style.cssText = 'color: #cbd5e1; font-size: 0.95rem; white-space: pre-wrap; word-break: break-word; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;';
+        content.textContent = c.content;
+
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display: flex; gap: 10px; justify-content: flex-end; margin-top: 5px;';
+        
+        if (c.status === 'published') {
+          const hideBtn = document.createElement('button');
+          hideBtn.className = 'badge secondary';
+          hideBtn.style.cursor = 'pointer';
+          hideBtn.textContent = 'Gizle';
+          hideBtn.onclick = () => updateCommentStatus(c.id, 'hide');
+          actions.appendChild(hideBtn);
+        } else {
+          const pubBtn = document.createElement('button');
+          pubBtn.className = 'badge primary';
+          pubBtn.style.cursor = 'pointer';
+          pubBtn.textContent = 'Yayınla';
+          pubBtn.onclick = () => updateCommentStatus(c.id, 'publish');
+          actions.appendChild(pubBtn);
+        }
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'badge';
+        delBtn.style.cssText = 'background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); cursor: pointer;';
+        delBtn.textContent = 'Sil';
+        delBtn.onclick = () => deleteComment(c.id);
+        actions.appendChild(delBtn);
+
+        item.appendChild(header);
+        item.appendChild(content);
+        item.appendChild(actions);
+        listEl.appendChild(item);
+      });
+    }
+  } catch (e) {
+    console.error('Yorumları yüklerken hata:', e);
+  }
+};
+
+const updateCommentStatus = async (id, action) => {
+  if (!confirm(`Yorum durumunu ${action === 'hide' ? 'gizli' : 'yayında'} olarak değiştirmek istediğinize emin misiniz?`)) return;
+  try {
+    const res = await fetch(`/api/admin/blog/comments/${id}/${action}`, { method: 'PATCH' });
+    if (res.ok) {
+      showToast('Yorum durumu güncellendi', 'success');
+      loadAdminComments();
+    } else {
+      showToast('İşlem başarısız', 'error');
+    }
+  } catch (e) {
+    showToast('Bağlantı hatası', 'error');
+  }
+};
+
+const deleteComment = async (id) => {
+  if (!confirm('Bu yorumu kalıcı olarak silmek istediğinize emin misiniz?')) return;
+  try {
+    const res = await fetch(`/api/admin/blog/comments/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('Yorum silindi', 'success');
+      loadAdminComments();
+    } else {
+      showToast('Silme başarısız', 'error');
+    }
+  } catch (e) {
+    showToast('Bağlantı hatası', 'error');
+  }
+};
+
+// Add loadAdminComments to the tabs activation
+const originalActivateTabComments = activateTab;
+activateTab = (target) => {
+  originalActivateTabComments(target);
+  if (target === 'comments') {
+    loadAdminComments();
+  }
+};

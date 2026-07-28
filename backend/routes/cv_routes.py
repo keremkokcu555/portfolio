@@ -152,6 +152,7 @@ ALLOWED_FILE_FIELDS = {
                      'pdf':   '/static/uploads/certificates/'},
     'projects':     {'image': '/static/uploads/projects/'},
     'courses':      {'certificate_link': '/static/uploads/certificates/'},
+    'blog_posts':   {'cover_image': '/static/uploads/blog/'},
 }
 
 @cv_bp.route('/api/file', methods=['DELETE'])

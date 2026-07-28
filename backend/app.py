@@ -14,6 +14,8 @@ from routes.auth_routes import auth_bp
 from routes.message_routes import message_bp
 from routes.analytics_routes import analytics_bp
 from routes.likes_routes import likes_bp
+from routes.blog_routes import blog_bp
+from routes.comment_routes import comment_bp
 
 app = Flask(__name__, template_folder='../frontend/templates', static_folder='../frontend/static')
 
@@ -41,6 +43,8 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(message_bp)
 app.register_blueprint(analytics_bp)
 app.register_blueprint(likes_bp)
+app.register_blueprint(blog_bp, url_prefix='/api')
+app.register_blueprint(comment_bp, url_prefix='/api')
 
 app.teardown_appcontext(close_db)
 ensure_database()
@@ -52,9 +56,14 @@ def csrf_protect():
         session['csrf_token'] = secrets.token_hex(32)
         
     if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
-        # Bypassing public endpoint
-        if request.path in ['/api/messages', '/api/like-portfolio'] and request.method == 'POST':
+        # Bypassing public endpoints (visitor auth, message form, portfolio likes, blog comments and likes)
+        if request.method in ['POST', 'DELETE'] and (
+            request.path in ['/api/messages', '/api/like-portfolio', '/api/auth/visitor/login', '/api/auth/visitor/logout']
+            or (request.path.startswith('/api/blog/') and request.path.endswith('/comments'))
+            or (request.path.startswith('/api/blog/') and request.path.endswith('/likes'))
+        ):
             return
+            
         
         token = session.get('csrf_token')
         if not token or token != request.headers.get('X-CSRFToken'):
@@ -102,6 +111,37 @@ app.jinja_env.globals['csrf_token'] = generate_csrf_token
 def home():
     # Only visitor page, purely read-only public portfolio
     return render_template('portfolio.html')
+
+@app.route('/blog/<slug>')
+def blog_detail(slug):
+    from services.blog_service import get_blog_post_by_slug
+    blog = get_blog_post_by_slug(slug)
+    if not blog or blog['status'] != 'published':
+        abort(404)
+        
+    real_ip = request.environ.get('HTTP_X_FORWARDED_FOR') or request.environ.get('REMOTE_ADDR') or '0.0.0.0'
+    if ',' in real_ip:
+        real_ip = real_ip.split(',')[0].strip()
+    user_agent = request.headers.get('User-Agent', '')
+    
+    try:
+        from services.analytics_service import record_blog_view
+        if record_blog_view(blog['id'], real_ip, user_agent):
+            blog['view_count'] = (blog.get('view_count') or 0) + 1
+    except Exception as e:
+        print(f"Error recording view in route: {e}")
+        
+    return render_template('blog_detail.html', blog=blog)
+
+@app.route('/admin/blog/<int:post_id>/preview')
+def admin_blog_preview(post_id):
+    if not session.get('admin_logged_in'):
+        return redirect('/admin/login')
+    from services.blog_service import get_blog_post_by_id
+    blog = get_blog_post_by_id(post_id)
+    if not blog:
+        abort(404)
+    return render_template('blog_detail.html', blog=blog, preview_mode=True)
 
 @app.route('/admin')
 def admin_root():

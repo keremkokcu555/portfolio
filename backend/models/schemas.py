@@ -174,6 +174,70 @@ CREATE TABLE IF NOT EXISTS portfolio_likes (
 );
 '''
 
+BLOG_POSTS_SCHEMA = '''
+CREATE TABLE IF NOT EXISTS blog_posts (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    title       TEXT NOT NULL,
+    content     TEXT NOT NULL,
+    tags        TEXT,
+    likes       INTEGER DEFAULT 0,
+    created_at  TEXT DEFAULT (datetime('now', 'localtime'))
+);
+'''
+
+BLOG_COMMENTS_SCHEMA = '''
+CREATE TABLE IF NOT EXISTS blog_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    blog_post_id INTEGER NOT NULL,
+    google_user_id TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    profile_image TEXT,
+    content TEXT NOT NULL,
+    status TEXT DEFAULT 'published',
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT,
+    FOREIGN KEY (blog_post_id) REFERENCES blog_posts (id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_comments_blog_id ON blog_comments(blog_post_id);
+CREATE INDEX IF NOT EXISTS idx_comments_status ON blog_comments(status);
+'''
+
+BLOG_POST_LIKES_SCHEMA = '''
+CREATE TABLE IF NOT EXISTS blog_post_likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    blog_post_id INTEGER NOT NULL,
+    google_user_id TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    UNIQUE(blog_post_id, google_user_id),
+    FOREIGN KEY (blog_post_id) REFERENCES blog_posts (id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_post_likes_blog_id ON blog_post_likes(blog_post_id);
+'''
+
+BLOG_COMMENT_LIKES_SCHEMA = '''
+CREATE TABLE IF NOT EXISTS blog_comment_likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    comment_id INTEGER NOT NULL,
+    google_user_id TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    UNIQUE(comment_id, google_user_id),
+    FOREIGN KEY (comment_id) REFERENCES blog_comments (id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_comment_likes_comment_id ON blog_comment_likes(comment_id);
+'''
+
+BLOG_VIEWS_SCHEMA = '''
+CREATE TABLE IF NOT EXISTS blog_views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    blog_post_id INTEGER NOT NULL,
+    visitor_hash TEXT NOT NULL,
+    viewed_at TEXT DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (blog_post_id) REFERENCES blog_posts (id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_blog_views_post_id ON blog_views(blog_post_id);
+CREATE INDEX IF NOT EXISTS idx_blog_views_dedup ON blog_views(blog_post_id, visitor_hash, viewed_at);
+'''
+
 SCHEMA_SQL = (
     PROFILE_SCHEMA
     + EDUCATION_SCHEMA
@@ -187,6 +251,11 @@ SCHEMA_SQL = (
     + MESSAGES_SCHEMA
     + VISITOR_ANALYTICS_SCHEMA
     + PORTFOLIO_LIKES_SCHEMA
+    + BLOG_POSTS_SCHEMA
+    + BLOG_COMMENTS_SCHEMA
+    + BLOG_POST_LIKES_SCHEMA
+    + BLOG_COMMENT_LIKES_SCHEMA
+    + BLOG_VIEWS_SCHEMA
 )
 
 REQUIRED_FIELDS = {

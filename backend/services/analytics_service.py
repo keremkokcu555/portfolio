@@ -241,3 +241,70 @@ def prune_old_records(days: int) -> int:
     )
     db.commit()
     return cursor.rowcount
+
+
+# ── Blog Görüntülenme Analitiği (Aşama 7) ───────────────────────────
+
+BLOG_VIEW_DEDUP_MINUTES = 30
+
+def record_blog_view(blog_post_id: int, ip: str, user_agent: str) -> bool:
+    """
+    Belirli bir blog yazısı için görüntülendi kaydı oluşturur.
+    F5 spam koruması (30 dakika) ve bot filtresi içerir.
+    """
+    try:
+        # Bot kontrolü
+        if is_bot(user_agent):
+            return False
+            
+        # Ziyaretçi hash üretimi (IP + UA + SECRET_KEY)
+        secret = os.environ.get('SECRET_KEY', '') + 'blog_views_v1'
+        data_str = f"{ip}_{user_agent or ''}"
+        visitor_hash = hmac.new(secret.encode(), data_str.encode(), hashlib.sha256).hexdigest()
+        
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Son 30 dakika içerisinde aynı ziyaretçinin kaydı var mı kontrol et
+        time_limit = f"-{BLOG_VIEW_DEDUP_MINUTES} minutes"
+        existing = cursor.execute('''
+            SELECT id FROM blog_views 
+            WHERE blog_post_id = ? AND visitor_hash = ? 
+              AND viewed_at >= datetime('now', ?, 'localtime')
+            LIMIT 1
+        ''', (blog_post_id, visitor_hash, time_limit)).fetchone()
+        
+        if existing:
+            return False
+            
+        cursor.execute('''
+            INSERT INTO blog_views (blog_post_id, visitor_hash) 
+            VALUES (?, ?)
+        ''', (blog_post_id, visitor_hash))
+        db.commit()
+        return True
+        
+    except Exception as e:
+        # Hata sitenin geri kalanını çökertmemeli
+        print(f"Blog view tracking error: {e}")
+        return False
+
+def get_blog_views_count(blog_post_id: int) -> int:
+    """Tekil bir blog yazısının görüntülenme sayısını döner."""
+    try:
+        db = get_db()
+        row = db.execute('SELECT COUNT(*) as count FROM blog_views WHERE blog_post_id = ?', (blog_post_id,)).fetchone()
+        return row['count'] if row else 0
+    except Exception as e:
+        print(f"Error getting blog views count: {e}")
+        return 0
+
+def get_total_blog_views_count() -> int:
+    """Tüm blog yazılarının toplam görüntülenme sayısını döner."""
+    try:
+        db = get_db()
+        row = db.execute('SELECT COUNT(*) as count FROM blog_views').fetchone()
+        return row['count'] if row else 0
+    except Exception as e:
+        print(f"Error getting total blog views count: {e}")
+        return 0

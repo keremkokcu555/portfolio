@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>{{ blog.title }} - Kerem Kökcü</title>
+  <meta name="description" content="{{ blog.summary if blog.summary else blog.title }}">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="{{ blog.title }}">
+  <meta property="og:description" content="{{ blog.summary if blog.summary else blog.title }}">
+  {% if blog.cover_image %}
+  <meta property="og:image" content="{{ blog.cover_image }}">
+  {% endif %}
+  <meta property="og:type" content="article">
+
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="stylesheet" href="/static/css/style.css?v=20260728" />
+  <link rel="stylesheet" href="/static/css/visitor.css?v=20260728" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="stylesheet" href="/static/css/visitor.css?v=20260728" />
+  {% if preview_mode %}
+  <meta name="robots" content="noindex, nofollow">
+  {% endif %}
+</head>
+<body class="home-active visitor-mode">
+  {% if preview_mode %}
+  <div style="background: #f59e0b; color: #0f172a; text-align: center; padding: 12px; font-weight: bold; font-size: 1rem; position: sticky; top: 0; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+    ⚠️ TASLAK ÖNİZLEME (Bu yazı henüz yayınlanmamıştır)
+  </div>
+  {% endif %}
+  <div class="page-shell">
+    <div class="background-layer"></div>
+
+    <header class="visitor-navbar reveal-on-scroll">
+      <div class="visitor-navbar-inner">
+        <a href="/" class="nav-logo-simple">
+          <span class="logo-initials">KK</span>
+          <span class="logo-fullname">KEREM KÖKCÜ</span>
+        </a>
+        <nav class="visitor-nav">
+          <ul class="visitor-nav-list">
+            <li><a href="/#projects-section">Projeler</a></li>
+            <li><a href="/#experience-section">Deneyim</a></li>
+            <li><a href="/#skills-section">Yetenekler</a></li>
+            <li><a href="/#education-section">Eğitim</a></li>
+            <li><a href="/#blog-section">Blog</a></li>
+            <li><a href="/#contact-section">İletişim</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="content-wrapper" style="padding-top: 100px;">
+      <section class="main-panel" style="max-width: 800px; margin: 0 auto; width: 100%;">
+        
+        <div style="margin-bottom: 30px;">
+          <a href="/#blog-section" class="badge secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px; font-size: 1rem; padding: 8px 15px;">
+            ← Bloglara Dön
+          </a>
+        </div>
+
+        <article class="bento-box reveal-on-scroll is-visible" style="padding: 0; overflow: hidden; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.05);">
+          
+          {% if blog.cover_image %}
+          <img src="{{ blog.cover_image }}" alt="{{ blog.title }}" style="width: 100%; max-height: 400px; object-fit: cover; display: block;">
+          {% endif %}
+          
+          <div style="padding: 40px 30px;">
+            
+            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
+              {% set first_tag = (blog.tags.split(',')[0].strip() if blog.tags else 'Genel') %}
+              <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">{{ first_tag }}</span>
+              
+              {% if blog.published_at %}
+              <span style="color: #8b949e; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span>{{ blog.published_at[:10] }}</span>
+                <span>•</span>
+                <span style="display: inline-flex; align-items: center; gap: 4px;">👁 {{ blog.view_count or 0 }} görüntülenme</span>
+              </span>
+              {% endif %}
+            </div>
+
+            <h1 style="font-size: 2.5rem; font-weight: 800; color: #fff; line-height: 1.3; margin-bottom: 20px;">
+              {{ blog.title }}
+            </h1>
+
+            {% if blog.summary %}
+            <p style="font-size: 1.2rem; color: #94a3b8; line-height: 1.6; margin-bottom: 40px; font-weight: 500;">
+              {{ blog.summary }}
+            </p>
+            {% endif %}
+
+            <div class="blog-content" style="color: #cbd5e1; font-size: 1.1rem; line-height: 1.8; white-space: pre-wrap; font-family: inherit;">{{ blog.content }}</div>
+            
+            {% if blog.tags %}
+            <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05);">
+              <h4 style="color: #8b949e; margin-bottom: 15px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Etiketler</h4>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                {% for tag in blog.tags.split(',') %}
+                <span class="tech-tag" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: #c9d1d9;">{{ tag.strip() }}</span>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Blog Beğeni Kontrolü (Aşama 5) -->
+            {% if not preview_mode %}
+            <div style="margin-top: 30px; display: flex; align-items: center; gap: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px;">
+              <button id="blog-like-btn" class="badge" aria-label="Blog yazısını beğen" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 1rem; padding: 10px 20px; border-radius: 30px; transition: all 0.2s ease;">
+                <span id="blog-like-icon" style="font-size: 1.25rem; transition: transform 0.2s ease; line-height: 1;">♡</span>
+                <span id="blog-like-text">Beğen</span>
+                <span id="blog-like-count" style="background: rgba(255,255,255,0.1); color: #fff; padding: 2px 10px; border-radius: 20px; font-size: 0.95rem; font-weight: bold;">0</span>
+              </button>
+            </div>
+            {% else %}
+            <div style="margin-top: 30px; display: flex; align-items: center; gap: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; color: #94a3b8; font-size: 0.95rem;">
+              Beğeniler önizleme modunda devre dışıdır.
+            </div>
+            {% endif %}
+
+          </div>
+        </article>
+
+        <!-- Yorumlar Bölümü -->
+        <div class="bento-box reveal-on-scroll is-visible" style="margin-top: 30px; padding: 40px 30px; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.05);">
+          <h3 style="font-size: 1.5rem; color: #fff; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+            Yorumlar <span id="comments-count" style="background: rgba(88, 166, 255, 0.1); color: #58a6ff; padding: 2px 10px; border-radius: 20px; font-size: 1rem;">0</span>
+          </h3>
+
+          <!-- Yorum Formu / Auth Alanı -->
+          {% if not preview_mode %}
+          <div id="comment-auth-section" style="margin-bottom: 40px; padding-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div id="comment-login-prompt" style="display: none; text-align: center; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+              <p style="color: #94a3b8; margin-bottom: 15px;">Yorum yapmak için Google ile giriş yapın.</p>
+              <div style="display: flex; justify-content: center;">
+                <div id="g_id_onload"
+                     data-client_id="492466186850-rg2iqjkh1ij7393vji3gcnmq1c9bfaea.apps.googleusercontent.com"
+                     data-context="use"
+                     data-ux_mode="popup"
+                     data-callback="handleCommentGoogleLogin"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="signin_with"
+                     data-size="large"
+                     data-logo_alignment="left">
+                </div>
+              </div>
+            </div>
+
+            <div id="comment-compose-section" style="display: none;">
+              <form id="comment-form">
+                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                  <img id="current-user-avatar" src="" alt="Profil" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);">
+                  <div style="flex: 1;">
+                    <textarea id="comment-input" rows="3" placeholder="Yorumunuz..." maxlength="2000" required style="width: 100%; width: -moz-available; width: -webkit-fill-available; max-width: 100%; min-width: 100%; box-sizing: border-box; padding: 12px 15px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: inherit; font-size: 1rem; resize: vertical; display: block; margin: 0;"></textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                      <span id="comment-char-count" style="color: #64748b; font-size: 0.85rem;">0 / 2000</span>
+                      <div style="display: flex; gap: 15px; align-items: center;">
+                        <span id="current-user-name" style="color: #94a3b8; font-size: 0.9rem;"></span>
+                        <button type="button" onclick="handleVisitorLogout()" style="background: transparent; border: none; color: #f87171; cursor: pointer; font-size: 0.85rem; text-decoration: underline;">Çıkış Yap</button>
+                        <button type="submit" id="submit-comment-btn" class="btn primary" style="padding: 8px 20px;">Gönder</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+          {% else %}
+          <div style="padding: 20px; background: rgba(255,255,255,0.02); border-radius: 12px; text-align: center; border: 1px dashed rgba(255,255,255,0.1); color: #94a3b8; margin-bottom: 30px; font-size: 0.95rem;">
+            Yorum yapma önizleme modunda devre dışıdır.
+          </div>
+          {% endif %}
+
+          <!-- Yorum Listesi -->
+          <div id="comments-list" style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="text-align: center; color: #64748b; padding: 20px;">Yorumlar yükleniyor...</div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+  <script>
+    window.BLOG_SLUG = "{{ blog.slug }}";
+    window.PREVIEW_MODE = {{ 'true' if preview_mode else 'false' }};
+  </script>
+  <script src="/static/js/portfolio.js?v=20260728_2"></script>
+</body>
+</html>
