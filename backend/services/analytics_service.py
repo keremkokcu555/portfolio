@@ -97,15 +97,29 @@ def parse_device(user_agent: str) -> dict:
     return {'device_type': device_type, 'browser': browser, 'os': os_name}
 
 
-def clean_referrer(referrer: str) -> str:
+def clean_referrer(referrer: str, user_agent: str = '') -> str:
     """
     Referrer URL'sini temizler.
     http(s) linklerinde domain kısmını alır.
-    App scheme'lerinde (android-app, fb vs.) veya diğerlerinde raw formatı korur (maks 255 karakter).
-    Boşsa 'Doğrudan' döner.
+    App scheme'lerinde (android-app, fb vs.) veya diğerlerinde raw formatı korur.
+    Boşsa User-Agent'a bakarak sosyal medya içi tarayıcıları tespit eder.
+    Hiçbir şey bulunamazsa 'Doğrudan' döner.
     """
+    # 1. User-Agent bazlı kesin sosyal medya tespiti (Referrer boş olsa bile yakalar)
+    ua = (user_agent or '').lower()
+    if 'instagram' in ua:
+        return 'instagram.com'
+    if 'linkedinapp' in ua or 'linkedin' in ua:
+        return 'linkedin.com'
+    if 'fban' in ua or 'fbav' in ua:
+        return 'facebook.com'
+    if 'twitter' in ua:
+        return 't.co'
+        
+    # 2. Normal Referrer işleme
     if not referrer or not referrer.strip():
         return 'Doğrudan'
+        
     try:
         if referrer.startswith('http://') or referrer.startswith('https://'):
             m = re.search(r'https?://([^/]+)', referrer)
@@ -212,7 +226,7 @@ def record_visit(ip: str, path: str, user_agent: str, referrer: str) -> None:
 
         v_hash = get_ip_hash(ip)
         parsed = parse_device(user_agent)
-        ref = clean_referrer(referrer)
+        ref = clean_referrer(referrer, user_agent)
         now = _now_utc()
 
         log.warning(f"5. Lookup NOT skipped, proceeding to fetch geo for IP: {ip}")
