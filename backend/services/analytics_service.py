@@ -98,16 +98,21 @@ def parse_device(user_agent: str) -> dict:
 
 
 def clean_referrer(referrer: str) -> str:
-    """Referrer URL'sinden yalnızca domain alır. Boşsa 'Doğrudan' döner."""
-    if not referrer:
+    """
+    Referrer URL'sini temizler.
+    http(s) linklerinde domain kısmını alır.
+    App scheme'lerinde (android-app, fb vs.) veya diğerlerinde raw formatı korur (maks 255 karakter).
+    Boşsa 'Doğrudan' döner.
+    """
+    if not referrer or not referrer.strip():
         return 'Doğrudan'
     try:
-        m = re.search(r'https?://([^/]+)', referrer)
-        if m:
-            domain = m.group(1).lower()
-            # kendi domain ise direkt say
-            return domain
-        return 'Doğrudan'
+        if referrer.startswith('http://') or referrer.startswith('https://'):
+            m = re.search(r'https?://([^/]+)', referrer)
+            if m:
+                return m.group(1).lower()
+        # Fallback for app links like android-app:// or fb://
+        return referrer[:255]
     except Exception:
         return 'Doğrudan'
 

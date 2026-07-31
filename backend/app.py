@@ -96,15 +96,18 @@ def security_headers(response):
             if ',' in real_ip:
                 real_ip = real_ip.split(',')[0].strip()
                 
-            log.warning(f"--- NEW VISITOR INSTRUMENTATION ---")
-            log.warning(f"1,2,3. Headers - X-Forwarded-For: {x_forwarded_for} | X-Real-IP: {x_real_ip} | REMOTE_ADDR: {remote_addr}")
-            log.warning(f"4. Final IP used for lookup: {real_ip}")
+            raw_referer = request.headers.get('Referer')
+            req_referrer = request.referrer
             
+            log.warning("--- REFERRER TEST ---")
+            log.warning(f"request.headers.get('Referer'): {raw_referer}")
+            log.warning(f"request.referrer: {req_referrer}")
+                
             record_visit(
                 ip=real_ip,
                 path=request.path,
                 user_agent=request.headers.get('User-Agent', ''),
-                referrer=request.headers.get('Referer', ''),
+                referrer=raw_referer or '',
             )
     except Exception as e:
         import traceback
