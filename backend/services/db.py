@@ -9,90 +9,108 @@ DB_PATH = os.path.abspath(os.path.join(DATA_DIR, 'cv.db'))
 
 
 def ensure_database():
+    import logging
+    log = logging.getLogger('db.ensure_database')
+
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR, exist_ok=True)
+
     conn = sqlite3.connect(DB_PATH)
-    conn.executescript(SCHEMA_SQL)
+    try:
+        conn.executescript(SCHEMA_SQL)
+    except Exception:
+        import traceback
+        log.error("SCHEMA_SQL executescript failed:\n%s", traceback.format_exc())
+        raise
+
     cursor = conn.cursor()
-    cursor.execute('SELECT COUNT(*) FROM profile')
-    count = cursor.fetchone()[0]
-    if count == 0:
-        cursor.execute(
-            '''INSERT INTO profile (
-               id, name, title, summary, profile_photo, email, phone, city, address,
-               github, linkedin, website, instagram, x, youtube, cv_pdf, last_updated
-             ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now", "localtime"))''',
-            tuple('' for _ in PROFILE_FIELDS)
-        )
-    else:
-        # Check if cv_pdf column exists and add it if not
-        try:
-            cursor.execute("PRAGMA table_info(profile)")
-            cols = [row[1] for row in cursor.fetchall()]
+
+    # ── Profile seed & cv_pdf migration ────────────────────────────
+    try:
+        count = cursor.execute('SELECT COUNT(*) FROM profile').fetchone()[0]
+        if count == 0:
+            cursor.execute(
+                '''INSERT INTO profile (
+                   id, name, title, summary, profile_photo, email, phone, city, address,
+                   github, linkedin, website, instagram, x, youtube, cv_pdf, last_updated
+                 ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now", "localtime"))''',
+                tuple('' for _ in PROFILE_FIELDS)
+            )
+        else:
+            cols = [r[1] for r in cursor.execute("PRAGMA table_info(profile)").fetchall()]
             if 'cv_pdf' not in cols:
                 cursor.execute("ALTER TABLE profile ADD COLUMN cv_pdf TEXT")
-        except Exception:
-            pass
-    # Ensure ip_address column exists in visitor_analytics (migration for existing DBs)
-    try:
-        cursor.execute("PRAGMA table_info(visitor_analytics)")
-        cols = [row[1] for row in cursor.fetchall()]
-        # All columns that may be missing in older production databases
-        analytics_migrations = [
-            ('ip_address',  'TEXT'),
-            ('country',     'TEXT'),
-            ('region',      'TEXT'),
-            ('city',        'TEXT'),
-            ('loc',         'TEXT'),
-            ('org',         'TEXT'),
-            ('timezone',    'TEXT'),
-            ('postal',      'TEXT'),
-            ('network_type','TEXT DEFAULT \'Unknown\''),
-        ]
-        for col_name, col_def in analytics_migrations:
-            if col_name not in cols:
-                cursor.execute(f"ALTER TABLE visitor_analytics ADD COLUMN {col_name} {col_def}")
+                log.info("Migration: added profile.cv_pdf")
     except Exception:
-        pass
+        import traceback
+        log.error("Profile migration failed:\n%s", traceback.format_exc())
 
-    tables_with_timestamps = [
-        'education', 'courses', 'certificates',
-        'experiences', 'projects', 'skills', 'languages'
+    # ── visitor_analytics: ALL required columns ─────────────────────
+    # Uses sqlite3.connect directly — NO flask.g, NO app_context required.
+    ANALYTICS_COLS = [
+        ('ip_address',   'TEXT'),
+        ('country',      'TEXT'),
+        ('region',       'TEXT'),
+        ('city',         'TEXT'),
+        ('loc',          'TEXT'),
+        ('org',          'TEXT'),
+        ('timezone',     'TEXT'),
+        ('postal',       'TEXT'),
+        ('network_type', "TEXT DEFAULT 'Unknown'"),
     ]
-    for table in tables_with_timestamps:
+    try:
+        existing = {r[1] for r in cursor.execute("PRAGMA table_info(visitor_analytics)").fetchall()}
+        for col_name, col_def in ANALYTICS_COLS:
+            if col_name not in existing:
+                cursor.execute(f"ALTER TABLE visitor_analytics ADD COLUMN {col_name} {col_def}")
+                log.info("Migration: added visitor_analytics.%s", col_name)
+    except Exception:
+        import traceback
+        log.error("visitor_analytics column migration failed:\n%s", traceback.format_exc())
+        raise  # This is critical — let it surface
+
+    # ── analytics_settings: new columns ────────────────────────────
+    SETTINGS_COLS = [
+        ('analytics_active',  'INTEGER DEFAULT 1'),
+        ('show_network_type', 'INTEGER DEFAULT 1'),
+    ]
+    try:
+        existing = {r[1] for r in cursor.execute("PRAGMA table_info(analytics_settings)").fetchall()}
+        for col_name, col_def in SETTINGS_COLS:
+            if col_name not in existing:
+                cursor.execute(f"ALTER TABLE analytics_settings ADD COLUMN {col_name} {col_def}")
+                log.info("Migration: added analytics_settings.%s", col_name)
+    except Exception:
+        import traceback
+        log.error("analytics_settings column migration failed:\n%s", traceback.format_exc())
+
+    # ── analytics_settings: default row ────────────────────────────
+    try:
+        if cursor.execute('SELECT COUNT(*) FROM analytics_settings').fetchone()[0] == 0:
+            cursor.execute('INSERT INTO analytics_settings (id) VALUES (1)')
+            log.info("Migration: inserted default analytics_settings row")
+    except Exception:
+        import traceback
+        log.error("analytics_settings seed failed:\n%s", traceback.format_exc())
+
+    # ── Timestamp columns on entity tables ─────────────────────────
+    TIMESTAMPED = ['education', 'courses', 'certificates', 'experiences', 'projects', 'skills', 'languages']
+    for table in TIMESTAMPED:
         try:
-            cursor.execute(f"PRAGMA table_info({table})")
-            cols = [row[1] for row in cursor.fetchall()]
+            cols = [r[1] for r in cursor.execute(f"PRAGMA table_info({table})").fetchall()]
             if 'created_at' not in cols:
                 cursor.execute(f"ALTER TABLE {table} ADD COLUMN created_at TEXT DEFAULT (datetime('now', 'localtime'))")
+                log.info("Migration: added %s.created_at", table)
             if 'updated_at' not in cols:
                 cursor.execute(f"ALTER TABLE {table} ADD COLUMN updated_at TEXT")
+                log.info("Migration: added %s.updated_at", table)
         except Exception:
-            # ignore if table doesn't exist yet
-            pass
+            import traceback
+            log.error("Timestamp migration for %s failed:\n%s", table, traceback.format_exc())
 
-
-    # Ensure default analytics settings row exists
-    try:
-        cursor.execute('SELECT COUNT(*) FROM analytics_settings')
-        count = cursor.fetchone()[0]
-        if count == 0:
-            cursor.execute('INSERT INTO analytics_settings (id) VALUES (1)')
-    except Exception:
-        pass
-
-    # Ensure new columns exist in analytics_settings
-    try:
-        cursor.execute("PRAGMA table_info(analytics_settings)")
-        cols = [row[1] for row in cursor.fetchall()]
-        if 'analytics_active' not in cols:
-            cursor.execute("ALTER TABLE analytics_settings ADD COLUMN analytics_active INTEGER DEFAULT 1")
-        if 'show_network_type' not in cols:
-            cursor.execute("ALTER TABLE analytics_settings ADD COLUMN show_network_type INTEGER DEFAULT 1")
-    except Exception:
-        pass
     conn.commit()
     conn.close()
+
 
 
 def get_db():

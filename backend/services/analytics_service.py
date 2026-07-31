@@ -139,20 +139,30 @@ def _fetch_geo(ip: str) -> dict:
 
 def ensure_ipinfo_columns() -> None:
     """
-    visitor_analytics tablosunda IPinfo kolonlarının varlığını kontrol eder.
-    Yoksa ALTER TABLE ile ekler. Var olanları değiştirmez.
-    Uygulama başlangıcında güvenle çağrılabilir.
+    visitor_analytics tablosunda IPinfo kolonlarinin varligini kontrol eder.
+    Yoksa ALTER TABLE ile ekler. Var olanlari degistirmez.
+    DOES NOT use flask.g or app context — safe to call at any time.
     """
-    cols_needed = ['country', 'region', 'city', 'loc', 'org', 'timezone', 'postal']
+    import sqlite3 as _sqlite3
+    from services.db import DB_PATH
+    import logging
+    log = logging.getLogger('analytics_service.ensure_ipinfo_columns')
+
+    cols_needed = ['country', 'region', 'city', 'loc', 'org', 'timezone', 'postal', 'network_type']
     try:
-        db = get_db()
-        existing = {r['name'] for r in db.execute('PRAGMA table_info(visitor_analytics)').fetchall()}
+        conn = _sqlite3.connect(DB_PATH)
+        existing = {r[1] for r in conn.execute('PRAGMA table_info(visitor_analytics)').fetchall()}
         for col in cols_needed:
             if col not in existing:
-                db.execute(f'ALTER TABLE visitor_analytics ADD COLUMN {col} TEXT')
-        db.commit()
+                col_def = "TEXT DEFAULT 'Unknown'" if col == 'network_type' else 'TEXT'
+                conn.execute(f'ALTER TABLE visitor_analytics ADD COLUMN {col} {col_def}')
+                log.info("Migration: added visitor_analytics.%s", col)
+        conn.commit()
+        conn.close()
     except Exception:
-        pass  # Migration hatası uygulamayı durdurmamalı
+        import traceback
+        log.error("ensure_ipinfo_columns failed:\n%s", traceback.format_exc())
+
 
 
 def record_visit(ip: str, path: str, user_agent: str, referrer: str) -> None:
