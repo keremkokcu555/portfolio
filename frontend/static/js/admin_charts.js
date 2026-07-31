@@ -293,11 +293,7 @@ const DashboardCharts = {
 
         const maskIpStr = (ip) => {
             if (!ip) return '—';
-            if (!maskIpUI) return ip; // Return raw IP if masking is OFF
-            const p = ip.split('.');
-            if (p.length === 4) return p[0] + '.' + p[1] + '.***.***';
-            const p6 = ip.split(':');
-            return (p6.length >= 2) ? (p6[0] + ':' + p6[1] + ':***:***') : '***';
+            return ip; // Masking disabled — show raw IP
         };
 
         const getNetBadge = (netType) => {
