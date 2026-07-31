@@ -147,15 +147,19 @@ def get_ip_info(ip: str) -> Optional[dict]:
         logger.debug("IPinfo önbellekten döndü: %s", masked)
         return cached
 
+    inst_log = logging.getLogger('analytics.instrumentation')
+    
     # ── 2. Token Kontrolü ────────────────────────────────────────────────────
     token = _get_token()
     if not token:
-        logger.info(
-            "IPINFO_TOKEN bulunamadı. Ücretsiz katman (anonim) kullanılacak. IP: %s", masked
-        )
+        inst_log.warning("6. IPINFO_TOKEN missing: True (Using free tier)")
+    else:
+        inst_log.warning("6. IPINFO_TOKEN missing: False (Token found)")
 
     # ── 3. HTTP İsteği ───────────────────────────────────────────────────────
     url = f"{IPINFO_API_BASE}/{ip}/json"
+    inst_log.warning(f"7. Exact URL requested: {url}")
+    
     headers = {
         "Accept": "application/json",
         "User-Agent": "portfolio-app/1.0 (ipinfo-service)",
@@ -163,9 +167,15 @@ def get_ip_info(ip: str) -> Optional[dict]:
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
-
     try:
         response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+        inst_log.warning(f"8. HTTP status returned by IPinfo: {response.status_code}")
+        
+        try:
+            body = response.text[:500]
+        except Exception:
+            body = "Could not read body"
+        inst_log.warning(f"9. Response body (first 500 chars): {body}")
 
         # ── HTTP Hata Kodları ────────────────────────────────────────────────
         if response.status_code == 401:
@@ -210,6 +220,7 @@ def get_ip_info(ip: str) -> Optional[dict]:
         try:
             data = response.json()
         except (json.JSONDecodeError, ValueError) as e:
+            inst_log.error(f"10. JSON Decode Exception: {e}")
             logger.error(
                 "IPinfo JSON ayrıştırma hatası. IP: %s | Hata: %s", masked, e
             )

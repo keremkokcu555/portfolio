@@ -85,10 +85,20 @@ def security_headers(response):
             and request.path == '/'
         ):
             from services.analytics_service import record_visit
-            real_ip = request.environ.get('HTTP_X_FORWARDED_FOR') or request.environ.get('REMOTE_ADDR') or '0.0.0.0'
-            # If multiple IPs are present in X-Forwarded-For, get the first one (the original client)
+            import logging
+            log = logging.getLogger('analytics.instrumentation')
+            
+            x_forwarded_for = request.environ.get('HTTP_X_FORWARDED_FOR')
+            x_real_ip = request.environ.get('HTTP_X_REAL_IP')
+            remote_addr = request.environ.get('REMOTE_ADDR')
+            
+            real_ip = x_forwarded_for or remote_addr or '0.0.0.0'
             if ',' in real_ip:
                 real_ip = real_ip.split(',')[0].strip()
+                
+            log.warning(f"--- NEW VISITOR INSTRUMENTATION ---")
+            log.warning(f"1,2,3. Headers - X-Forwarded-For: {x_forwarded_for} | X-Real-IP: {x_real_ip} | REMOTE_ADDR: {remote_addr}")
+            log.warning(f"4. Final IP used for lookup: {real_ip}")
             
             record_visit(
                 ip=real_ip,
@@ -96,8 +106,10 @@ def security_headers(response):
                 user_agent=request.headers.get('User-Agent', ''),
                 referrer=request.headers.get('Referer', ''),
             )
-    except Exception:
-        pass
+    except Exception as e:
+        import traceback
+        import logging
+        logging.getLogger('analytics.instrumentation').error(f"10. App Exception: {traceback.format_exc()}")
 
     return response
 

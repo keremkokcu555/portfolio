@@ -171,6 +171,8 @@ def record_visit(ip: str, path: str, user_agent: str, referrer: str) -> None:
     Gerçek IP adresi loglanır (maskeleme UI tarafındadır).
     Settings tablosundaki yapılandırmalara göre filtreleme yapılır.
     """
+    import logging
+    log = logging.getLogger('analytics.instrumentation')
     try:
         from flask import session
         settings = get_analytics_settings()
@@ -178,24 +180,29 @@ def record_visit(ip: str, path: str, user_agent: str, referrer: str) -> None:
         # 1. Admin Kontrolü
         if settings.get('count_admin', 0) == 0:
             if session.get('admin_id'):
+                log.warning("5. Lookup skipped: Admin logged in")
                 return
                 
         # 2. Localhost Kontrolü
         if settings.get('count_localhost', 0) == 0:
             if ip in ['127.0.0.1', '::1', 'localhost']:
+                log.warning("5. Lookup skipped: Localhost detected")
                 return
                 
         # 3. Bot Kontrolü
         if settings.get('count_bots', 0) == 0:
             if is_bot(user_agent):
+                log.warning("5. Lookup skipped: Bot detected")
                 return
             ua_lower = (user_agent or '').lower()
             if any(kw in ua_lower for kw in ANALYTICS_CONFIG['bot_keywords']):
+                log.warning("5. Lookup skipped: Bot keyword detected")
                 return
                 
         # 4. Excluded IP Kontrolü
         excluded_ips = get_excluded_ips()
         if ip in excluded_ips:
+            log.warning("5. Lookup skipped: IP is excluded")
             return
 
         v_hash = get_ip_hash(ip)
@@ -203,6 +210,7 @@ def record_visit(ip: str, path: str, user_agent: str, referrer: str) -> None:
         ref = clean_referrer(referrer)
         now = _now_utc()
 
+        log.warning(f"5. Lookup NOT skipped, proceeding to fetch geo for IP: {ip}")
         # IPinfo: cache'li, hata-izole çağrı
         geo = _fetch_geo(ip)
         
@@ -225,8 +233,11 @@ def record_visit(ip: str, path: str, user_agent: str, referrer: str) -> None:
             )
         )
         db.commit()
-    except Exception:
-        pass  # Analytics hatası portfolio'yu asla bozmaz
+        log.warning(f"11. Final DB Insert Values -> country: {geo.get('country')}, city: {geo.get('city')}, region: {geo.get('region')}, org: {geo.get('org')}, timezone: {geo.get('timezone')}, network_type: {net_type}")
+    except Exception as e:
+        import traceback
+        import logging
+        logging.getLogger('analytics.instrumentation').error(f"10. analytics_service Exception: {traceback.format_exc()}")
 
 
 # ── Admin API için sorgu fonksiyonları ───────────────────────────
