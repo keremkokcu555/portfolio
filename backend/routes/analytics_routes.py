@@ -123,6 +123,71 @@ def analytics_dashboard():
         return jsonify({'error': 'Veri alınamadı', 'detail': str(e), 'type': type(e).__name__}), 500
 
 
+@analytics_bp.route('/api/analytics/migrate', methods=['POST'])
+@login_required
+def analytics_migrate():
+    """
+    Production-safe migration endpoint.
+    Runs ALTER TABLE for all missing visitor_analytics columns directly via sqlite3 (no app_context dependency).
+    Returns a full report of which columns existed and which were added.
+    """
+    import sqlite3 as _sqlite3
+    from services.db import DB_PATH
+    import traceback as _tb
+
+    REQUIRED_COLS = [
+        ('ip_address',   'TEXT'),
+        ('country',      'TEXT'),
+        ('region',       'TEXT'),
+        ('city',         'TEXT'),
+        ('loc',          'TEXT'),
+        ('org',          'TEXT'),
+        ('timezone',     'TEXT'),
+        ('postal',       'TEXT'),
+        ('network_type', "TEXT DEFAULT 'Unknown'"),
+    ]
+
+    report = {
+        'db_path': DB_PATH,
+        'already_existed': [],
+        'added': [],
+        'failed': [],
+    }
+
+    try:
+        conn = _sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(visitor_analytics)")
+        existing_cols = {row[1] for row in cursor.fetchall()}
+        report['existing_before'] = list(existing_cols)
+
+        for col_name, col_def in REQUIRED_COLS:
+            if col_name in existing_cols:
+                report['already_existed'].append(col_name)
+            else:
+                try:
+                    cursor.execute(f"ALTER TABLE visitor_analytics ADD COLUMN {col_name} {col_def}")
+                    report['added'].append(col_name)
+                except Exception as e:
+                    report['failed'].append({'column': col_name, 'error': str(e)})
+
+        conn.commit()
+
+        # Verify final state
+        cursor.execute("PRAGMA table_info(visitor_analytics)")
+        report['existing_after'] = [row[1] for row in cursor.fetchall()]
+        conn.close()
+
+        report['success'] = True
+        return jsonify(report), 200
+
+    except Exception as e:
+        report['success'] = False
+        report['error'] = str(e)
+        report['traceback'] = _tb.format_exc()
+        return jsonify(report), 500
+
+
 @analytics_bp.route('/api/analytics/health', methods=['GET'])
 @login_required
 def analytics_health():
