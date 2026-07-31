@@ -304,11 +304,26 @@ const DashboardCharts = {
             else if (netType === 'Residential') { color = '#4ade80'; bg = 'rgba(74,222,128,0.1)'; }
             return `<span style="color:${color}; background:${bg}; padding:2px 6px; border-radius:4px; font-size:0.8em;">${esc(netType)}</span>`;
         };
+        
+        const getSourceLabel = (ref) => {
+            if (!ref || ref.trim() === '' || ref === 'Doğrudan' || ref === 'Direct') return 'Direct';
+            const lowerRef = ref.toLowerCase();
+            if (lowerRef.includes('instagram.com') || lowerRef.includes('l.instagram.com')) return 'Instagram';
+            if (lowerRef.includes('linkedin.com')) return 'LinkedIn';
+            if (lowerRef.includes('google.com')) return 'Google Search';
+            if (lowerRef.includes('bing.com')) return 'Bing';
+            if (lowerRef.includes('facebook.com')) return 'Facebook';
+            if (lowerRef.includes('t.co')) return 'X (Twitter)';
+            
+            // Just return domain or truncated if it's something else
+            return esc(ref.length > 25 ? ref.substring(0, 22) + '...' : ref);
+        };
 
         tbody.innerHTML = rows.map(r => {
             const flag = r.country ? `<img src="https://flagcdn.com/16x12/${esc(r.country.toLowerCase())}.png" width="16" height="12" style="border-radius:2px;vertical-align:middle;margin-right:4px;" onerror="this.style.display='none'">` : '';
             const countryCell = r.country ? (flag + esc(r.country)) : '<span style="color:#475569">—</span>';
             const netCell = showNet ? `<td style="padding:5px 8px;">${getNetBadge(r.network_type)}</td>` : '';
+            const sourceLabel = getSourceLabel(r.referrer);
             
             return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -320,6 +335,7 @@ const DashboardCharts = {
                 <td style="padding:5px 8px;">${esc(r.browser) || '—'}</td>
                 <td style="padding:5px 8px;">${esc(r.os) || '—'}</td>
                 ${netCell}
+                <td style="padding:5px 8px;color:#a78bfa;font-size:0.9em;white-space:nowrap;" title="${esc(r.referrer)}">${sourceLabel}</td>
             </tr>`;
         }).join('');
     }
