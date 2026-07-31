@@ -23,7 +23,7 @@ const navButtons = document.querySelectorAll('.top-nav .nav-link[data-target]');
 const mobileToggle = document.querySelector('.navbar-toggle');
 const topNav = document.querySelector('.top-nav');
 
-const activateTab = (target) => {
+let activateTab = (target) => {
   navButtons.forEach((button) => button.classList.remove('active'));
   const selectedButtons = document.querySelectorAll(`.top-nav .nav-link[data-target="${target}"]`);
   selectedButtons.forEach((button) => button.classList.add('active'));

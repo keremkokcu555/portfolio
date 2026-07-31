@@ -608,7 +608,7 @@ def get_dashboard_data(time_range: str = '30days') -> dict:
 
     # Tables: Recent Visits
     recent_rows = db.execute(
-        """SELECT visited_at, ip_address, country, city, org, browser, os 
+        """SELECT visited_at, ip_address, country, city, org, browser, os, network_type 
            FROM visitor_analytics 
            WHERE visited_at >= ? 
            ORDER BY visited_at DESC 
@@ -626,7 +626,7 @@ def get_dashboard_data(time_range: str = '30days') -> dict:
             'org': r['org'],
             'browser': r['browser'],
             'os': r['os'],
-            'network_type': r.get('network_type', 'Unknown')
+            'network_type': r['network_type'] if 'network_type' in r.keys() else 'Unknown'
         })
 
     total_all = db.execute("SELECT COUNT(*) FROM visitor_analytics").fetchone()[0]
