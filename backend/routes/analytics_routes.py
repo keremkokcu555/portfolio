@@ -262,3 +262,45 @@ def manage_excluded_ips():
         db.commit()
         
     return jsonify({'success': True})
+
+
+@analytics_bp.route('/api/analytics2/summary', methods=['GET'])
+@login_required
+def analytics_summary2():
+    from services.analytics_service import get_summary_stats2
+    try:
+        return jsonify(get_summary_stats2())
+    except Exception:
+        return jsonify({'error': 'Veri alnamad'}), 500
+
+@analytics_bp.route('/api/analytics2/daily', methods=['GET'])
+@login_required
+def analytics_daily2():
+    from services.analytics_service import get_daily_stats2
+    try:
+        days = int(request.args.get('days', 30))
+        days = max(1, min(days, 365))
+        return jsonify(get_daily_stats2(days))
+    except Exception:
+        return jsonify({'error': 'Veri alnamad'}), 500
+
+@analytics_bp.route('/api/analytics2/breakdown', methods=['GET'])
+@login_required
+def analytics_breakdown2():
+    from services.analytics_service import get_breakdown2
+    try:
+        return jsonify(get_breakdown2())
+    except Exception:
+        return jsonify({'error': 'Veri alnamad'}), 500
+
+@analytics_bp.route('/api/analytics2/recent', methods=['GET'])
+@login_required
+def analytics_recent2():
+    from services.analytics_service import get_recent_visits2
+    try:
+        limit = int(request.args.get('limit', 20))
+        limit = max(1, min(limit, 100))
+        return jsonify(get_recent_visits2(limit))
+    except Exception:
+        return jsonify({'error': 'Veri alnamad'}), 500
+

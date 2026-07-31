@@ -498,6 +498,149 @@
 
           </section>
 
+        <section id="analytics2" class="tab-content card">
+          <h2>Analitik 2 (Eski Sürüm)</h2>
+          <div class="tab-description">Public portföyünüzü ziyaret eden anonim kullanıcılara ait istatistikler. Ziyaretçi IP adresleri güvenlik ve analitik amacıyla kayıt altına alınmaktadır.</div>
+
+          <!-- Özet Kartlar -->
+          <div class="db-stats-grid" id="analytics-summary-grid" style="margin-top:18px; margin-bottom:22px;">
+            <div class="db-stat-card">
+              <div class="db-stat-icon">👁</div>
+              <div class="db-stat-count" id="an2-today-views">—</div>
+              <div class="db-stat-label">Bugün Görüntüleme</div>
+            </div>
+            <div class="db-stat-card">
+              <div class="db-stat-icon">🧑</div>
+              <div class="db-stat-count" id="an2-today-unique">—</div>
+              <div class="db-stat-label">Bugün Tekil</div>
+            </div>
+            <div class="db-stat-card">
+              <div class="db-stat-icon">📅</div>
+              <div class="db-stat-count" id="an2-week-views">—</div>
+              <div class="db-stat-label">Son 7 Gün</div>
+            </div>
+            <div class="db-stat-card">
+              <div class="db-stat-icon">📆</div>
+              <div class="db-stat-count" id="an2-month-views">—</div>
+              <div class="db-stat-label">Bu Ay</div>
+            </div>
+            <div class="db-stat-card">
+              <div class="db-stat-icon">📊</div>
+              <div class="db-stat-count" id="an2-total-views">—</div>
+              <div class="db-stat-label">Toplam</div>
+            </div>
+          </div>
+
+          <div class="tab-row" style="flex-wrap:wrap; gap:20px;">
+
+            <!-- Sol kolon: Günlük tablo + Son ziyaretler -->
+            <div style="flex:1; min-width:280px;">
+
+              <!-- Günlük tablo -->
+              <div class="db-panel" style="margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                  <h3 class="db-panel-title" style="margin:0;">Günlük Ziyaret</h3>
+                  <div style="display:flex; gap:8px;">
+                    <button id="an2-btn-7" onclick="loadDailyStats2(7)"
+                      style="background:#6366f1; color:#fff; border:none; border-radius:5px; padding:3px 12px; cursor:pointer; font-size:0.82em;">7 Gün</button>
+                    <button id="an2-btn-30" onclick="loadDailyStats2(30)"
+                      style="background:rgba(255,255,255,0.08); color:#94a3b8; border:1px solid rgba(255,255,255,0.1); border-radius:5px; padding:3px 12px; cursor:pointer; font-size:0.82em;">30 Gün</button>
+                  </div>
+                </div>
+                <div style="overflow-x:auto;">
+                  <table id="an2-daily-table" style="width:100%; border-collapse:collapse; font-size:0.88em;">
+                    <thead>
+                      <tr style="color:#94a3b8; border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <th style="text-align:left; padding:6px 8px; font-weight:500;">Tarih</th>
+                        <th style="text-align:right; padding:6px 8px; font-weight:500;">Görüntüleme</th>
+                        <th style="text-align:right; padding:6px 8px; font-weight:500;">Tekil Ziyaretçi</th>
+                      </tr>
+                    </thead>
+                    <tbody id="an2-daily-body">
+                      <tr><td colspan="3" style="text-align:center; padding:12px; color:#64748b;">Yükleniyor...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Son Ziyaretler -->
+              <div class="db-panel">
+                <h3 class="db-panel-title">Son Ziyaretler</h3>
+                <div style="overflow-x:auto;">
+                  <table id="an2-recent-table" style="width:100%; border-collapse:collapse; font-size:0.85em;">
+                    <thead>
+                      <tr style="color:#94a3b8; border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <th style="text-align:left; padding:5px 8px; font-weight:500;">Tarih</th>
+                        <th style="text-align:left; padding:5px 8px; font-weight:500;">IP Adresi</th>
+                        <th style="text-align:left; padding:5px 8px; font-weight:500;">Cihaz</th>
+                        <th style="text-align:left; padding:5px 8px; font-weight:500;">Tarayıcı</th>
+                        <th style="text-align:left; padding:5px 8px; font-weight:500;">İşletim Sistemi</th>
+                        <th style="text-align:left; padding:5px 8px; font-weight:500;">Kaynak</th>
+                      </tr>
+                    </thead>
+                    <tbody id="an2-recent-body">
+                      <tr><td colspan="6" style="text-align:center; padding:12px; color:#64748b;">Yükleniyor...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div><!-- /sol kolon -->
+
+            <!-- Sağ kolon: Dağılımlar + Prune -->
+            <div style="flex:0 0 300px; min-width:240px;">
+
+              <!-- Cihaz Dağılımı -->
+              <div class="db-panel" style="margin-bottom:16px;">
+                <h3 class="db-panel-title">Cihaz</h3>
+                <div id="an2-device-bars"></div>
+              </div>
+
+              <!-- Tarayıcı Dağılımı -->
+              <div class="db-panel" style="margin-bottom:16px;">
+                <h3 class="db-panel-title">Tarayıcı</h3>
+                <div id="an2-browser-bars"></div>
+              </div>
+
+              <!-- İşletim Sistemi -->
+              <div class="db-panel" style="margin-bottom:16px;">
+                <h3 class="db-panel-title">İşletim Sistemi</h3>
+                <div id="an2-os-bars"></div>
+              </div>
+
+              <!-- Referrer -->
+              <div class="db-panel" style="margin-bottom:16px;">
+                <h3 class="db-panel-title">Kaynak</h3>
+                <div id="an2-referrer-bars"></div>
+              </div>
+
+              <!-- Manuel Prune -->
+              <div class="db-panel" style="border:1px solid rgba(248,113,113,0.25); border-radius:8px; padding:14px;">
+                <h3 class="db-panel-title" style="color:#f87171;">Veri Temizleme</h3>
+                <p style="font-size:0.82em; color:#94a3b8; margin-bottom:12px;">
+                  Belirlediğiniz günden eski analitik kayıtları siler. Mevcut portföy verilerinize dokunmaz.
+                </p>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                  <select id="prune-days-select" style="background:#1e293b; color:#cbd5e1; border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:5px 10px; font-size:0.85em;">
+                    <option value="90">90 günden eski</option>
+                    <option value="180">180 günden eski</option>
+                    <option value="365">365 günden eski</option>
+                  </select>
+                  <button id="prune-btn" onclick="pruneAnalytics2()"
+                    style="background:transparent; border:1px solid #f87171; color:#f87171; border-radius:6px; padding:5px 14px; cursor:pointer; font-size:0.85em; transition:background 0.2s;"
+                    onmouseover="this.style.background='#f87171';this.style.color='#fff'"
+                    onmouseout="this.style.background='transparent';this.style.color='#f87171'">
+                    Sil
+                  </button>
+                </div>
+                <div id="prune-result" style="margin-top:8px; font-size:0.82em; color:#4ade80; display:none;"></div>
+              </div>
+
+            </div><!-- /sağ kolon -->
+
+          </div>
+        </section>
+
         <section id="messages" class="tab-content card">
           <h2>Gelen Mesajlar</h2>
           <div class="tab-description">Site üzerinden gönderilen ziyaretçi mesajlarını buradan yönetebilirsiniz.</div>
@@ -839,5 +982,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/static/js/admin_charts.js?v=1785485616"></script>
 <script src="/static/js/admin.js?v=1785485616"></script>
+<script src="/static/js/admin_analytics2.js?v=20260731"></script>
 </body>
 </html>

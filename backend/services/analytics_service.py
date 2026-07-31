@@ -703,3 +703,80 @@ def get_dashboard_data(time_range: str = '30days') -> dict:
             'generated_at': now.isoformat()
         }
     }
+
+def get_summary_stats2() -> dict:
+    """Dashboard için özet istatistikler (Eski versiyon)."""
+    from services.db import get_db
+    from datetime import datetime, timezone
+    db = get_db()
+    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+
+    today_views = db.execute("SELECT COUNT(*) FROM visitor_analytics WHERE visited_at LIKE ?", (today + '%',)).fetchone()[0]
+    today_unique = db.execute("SELECT COUNT(DISTINCT visitor_hash) FROM visitor_analytics WHERE visited_at LIKE ?", (today + '%',)).fetchone()[0]
+    week_views = db.execute("SELECT COUNT(*) FROM visitor_analytics WHERE visited_at >= datetime('now', '-7 days', 'utc')").fetchone()[0]
+    month_prefix = datetime.now(timezone.utc).strftime('%Y-%m')
+    month_views = db.execute("SELECT COUNT(*) FROM visitor_analytics WHERE visited_at LIKE ?", (month_prefix + '%',)).fetchone()[0]
+    total_views = db.execute("SELECT COUNT(*) FROM visitor_analytics").fetchone()[0]
+
+    return {
+        'today_views':  today_views,
+        'today_unique': today_unique,
+        'week_views':   week_views,
+        'month_views':  month_views,
+        'total_views':  total_views,
+    }
+
+def get_daily_stats2(days: int = 30) -> list:
+    """Son N gün için günlük görüntüleme ve tekil ziyaretçi (Eski versiyon)."""
+    from services.db import get_db
+    db = get_db()
+    rows = db.execute(
+        """SELECT
+               substr(visited_at, 1, 10) AS day,
+               COUNT(*)                 AS views,
+               COUNT(DISTINCT visitor_hash) AS unique_visitors
+           FROM visitor_analytics
+           WHERE visited_at >= datetime('now', ?, 'utc')
+           GROUP BY day
+           ORDER BY day ASC""",
+        (f'-{days} days',)
+    ).fetchall()
+    return [{'date': r['day'], 'views': r['views'], 'unique': r['unique_visitors']} for r in rows]
+
+def get_breakdown2() -> dict:
+    """Cihaz, tarayıcı, OS ve referrer dağılımları (Eski versiyon)."""
+    from services.db import get_db
+    db = get_db()
+
+    def _fetch(col):
+        rows = db.execute(
+            f"""SELECT {col} AS label, COUNT(*) AS cnt
+                FROM visitor_analytics
+                GROUP BY {col}
+                ORDER BY cnt DESC
+                LIMIT 10"""
+        ).fetchall()
+        total = sum(r['cnt'] for r in rows)
+        return [{'label': r['label'] or 'Bilinmiyor', 'count': r['cnt'],
+                 'pct': round(r['cnt'] * 100 / total) if total else 0} for r in rows]
+
+    return {
+        'device':   _fetch('device_type'),
+        'browser':  _fetch('browser'),
+        'os':       _fetch('os'),
+        'referrer': _fetch('referrer'),
+    }
+
+def get_recent_visits2(limit: int = 20) -> list:
+    """Son N ziyaret (Eski versiyon)."""
+    from services.db import get_db
+    db = get_db()
+    rows = db.execute(
+        """SELECT visited_at, path, device_type, browser, os, referrer, ip_address
+           FROM visitor_analytics
+           ORDER BY id DESC
+           LIMIT ?""",
+        (limit,)
+    ).fetchall()
+    return [dict(r) for r in rows]
+
