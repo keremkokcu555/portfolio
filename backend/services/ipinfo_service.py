@@ -150,19 +150,19 @@ def get_ip_info(ip: str) -> Optional[dict]:
     # ── 2. Token Kontrolü ────────────────────────────────────────────────────
     token = _get_token()
     if not token:
-        logger.warning(
-            "IPINFO_TOKEN bulunamadı. IP sorgusunu atlanıyor: %s", masked
+        logger.info(
+            "IPINFO_TOKEN bulunamadı. Ücretsiz katman (anonim) kullanılacak. IP: %s", masked
         )
-        return None
 
     # ── 3. HTTP İsteği ───────────────────────────────────────────────────────
     url = f"{IPINFO_API_BASE}/{ip}/json"
     headers = {
-        # Token Authorization header'ı üzerinden iletilir; URL'ye eklenmez
-        "Authorization": f"Bearer {token}",
         "Accept": "application/json",
         "User-Agent": "portfolio-app/1.0 (ipinfo-service)",
     }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
 
     try:
         response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
@@ -303,13 +303,12 @@ def test_ipinfo_service(test_ip: str = "8.8.8.8") -> None:
     # Token kontrolü (değerini loglamıyoruz)
     token = _get_token()
     if not token:
-        print("[UYARI] IPINFO_TOKEN bulunamadı. Gerçek API isteği atılamaz.")
-        print("        .env dosyanıza şu satırı ekleyin:")
-        print("        IPINFO_TOKEN=your_token_here")
-        print(f"{'='*60}\n")
-        return
+        print("[WARN] IPINFO_TOKEN bulunamadı. Ücretsiz katman (anonim) kullanılacak.")
+        print("       .env dosyanıza şu satırı eklerseniz rate limit artar:")
+        print("       IPINFO_TOKEN=your_token_here")
+    else:
+        print(f"[OK]   Token mevcut (ilk 4 karakter: {token[:4]}****)")
 
-    print(f"[OK]   Token mevcut (ilk 4 karakter: {token[:4]}****)")
     print(f"[OK]   Test IP: {_mask_ip(test_ip)}")
 
     # 1. İstek (API'den)
@@ -377,22 +376,18 @@ def verify_ipinfo_service(test_ip: str = "8.8.8.8") -> bool:
     # ── 1. Token Kontrolü ─────────────────────────────────────────────────────
     token = _get_token()
     if not token:
-        print("[FAIL] IPINFO token not found.")
-        print()
-        print("  Çözüm: .env dosyanıza şu satırı ekleyin:")
-        print("  IPINFO_TOKEN=your_token_here")
-        print(f"{SEP}\n")
-        return False
-
-    print("[OK]   IPINFO token detected.")
+        print("[WARN] IPINFO token not found. Using free tier (anonymous).")
+    else:
+        print("[OK]   IPINFO token detected.")
 
     # ── 2. API İsteği ────────────────────────────────────────────────────────
     url = f"{IPINFO_API_BASE}/{test_ip}/json"
     headers = {
-        "Authorization": f"Bearer {token}",
         "Accept": "application/json",
         "User-Agent": "portfolio-app/1.0 (ipinfo-verify)",
     }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
 
     try:
         response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
