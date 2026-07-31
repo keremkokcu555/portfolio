@@ -97,17 +97,19 @@ def security_headers(response):
                 real_ip = real_ip.split(',')[0].strip()
                 
             raw_referer = request.headers.get('Referer')
-            req_referrer = request.referrer
             
-            log.warning("--- REFERRER TEST ---")
-            log.warning(f"request.headers.get('Referer'): {raw_referer}")
-            log.warning(f"request.referrer: {req_referrer}")
-                
+            # Fallback to URL parameters for source tracking (utm_source or ref)
+            url_source = request.args.get('utm_source') or request.args.get('ref')
+            
+            final_referrer = raw_referer
+            if not final_referrer and url_source:
+                final_referrer = url_source
+            
             record_visit(
                 ip=real_ip,
                 path=request.path,
                 user_agent=request.headers.get('User-Agent', ''),
-                referrer=raw_referer or '',
+                referrer=final_referrer or '',
             )
     except Exception as e:
         import traceback
