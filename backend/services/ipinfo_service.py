@@ -343,6 +343,126 @@ def test_ipinfo_service(test_ip: str = "8.8.8.8") -> None:
     print(f"{'='*60}\n")
 
 
+
+# ─── Servis Doğrulama Fonksiyonu ─────────────────────────────────────────────
+
+def verify_ipinfo_service(test_ip: str = "8.8.8.8") -> bool:
+    """
+    IPinfo servisinin uçtan uca çalışıp çalışmadığını doğrular.
+
+    Kontrol sırası:
+      1. IPINFO_TOKEN ortam değişkeni okunabilir mi?
+      2. https://ipinfo.io/<ip> API'sine gerçek bir istek atılabiliyor mu?
+      3. Yanıttaki zorunlu alanlar (ip, city, region, country, loc, org, timezone) mevcut mu?
+
+    Döndürdüğü değer
+    ────────────────
+    True  : Tüm kontroller başarılı — servis kullanıma hazır.
+    False : Herhangi bir kontrol başarısız — detay terminalde gösterilir.
+
+    Hiçbir durumda exception dışarıya sızdırmaz; sistem asla çökmez.
+    """
+    logging.basicConfig(
+        level=logging.WARNING,                      # sadece uyarı ve üzeri
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
+
+    REQUIRED_FIELDS = ["ip", "city", "region", "country", "loc", "org", "timezone"]
+    SEP = "=" * 41
+
+    print(f"\n{SEP}")
+    print("  IPINFO SERVICE VERIFICATION")
+    print(SEP)
+
+    # ── 1. Token Kontrolü ─────────────────────────────────────────────────────
+    token = _get_token()
+    if not token:
+        print("[FAIL] IPINFO token not found.")
+        print()
+        print("  Çözüm: .env dosyanıza şu satırı ekleyin:")
+        print("  IPINFO_TOKEN=your_token_here")
+        print(f"{SEP}\n")
+        return False
+
+    print("[OK]   IPINFO token detected.")
+
+    # ── 2. API İsteği ────────────────────────────────────────────────────────
+    url = f"{IPINFO_API_BASE}/{test_ip}/json"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json",
+        "User-Agent": "portfolio-app/1.0 (ipinfo-verify)",
+    }
+
+    try:
+        response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+    except requests.exceptions.Timeout:
+        print("[FAIL] API istegi zaman asimina ugradi (5s).")
+        print(f"\n  Sebep   : İnternet bağlantısı yavaş veya IPinfo erişilemiyor.")
+        print(f"{SEP}\n")
+        return False
+    except requests.exceptions.ConnectionError:
+        print("[FAIL] API'ye baglanılamadi.")
+        print(f"\n  Sebep   : İnternet bağlantısı yok veya DNS çözümlenemedi.")
+        print(f"{SEP}\n")
+        return False
+    except Exception as e:
+        print(f"[FAIL] Beklenmeyen hata: {type(e).__name__}")
+        print(f"{SEP}\n")
+        return False
+
+    # ── 3. HTTP Durum Kodu ───────────────────────────────────────────────────
+    if response.status_code == 401:
+        print("[FAIL] API istegi reddedildi.")
+        print(f"\n  Sebep   : Token geçersiz (401 Unauthorized).")
+        print(f"  Çözüm   : https://ipinfo.io/account/token adresinden geçerli token alın.")
+        print(f"{SEP}\n")
+        return False
+
+    if response.status_code == 429:
+        print("[FAIL] API istek limiti dolmus.")
+        print(f"\n  Sebep   : 429 Too Many Requests.")
+        print(f"  Çözüm   : Ücretsiz planda aylık 50.000 istek hakkı vardır.")
+        print(f"{SEP}\n")
+        return False
+
+    if not response.ok:
+        print(f"[FAIL] API beklenmeyen durum kodu: {response.status_code}")
+        print(f"{SEP}\n")
+        return False
+
+    # ── 4. JSON Ayrıştırma ───────────────────────────────────────────────────
+    try:
+        data = response.json()
+    except (json.JSONDecodeError, ValueError):
+        print("[FAIL] API yaniti JSON olarak ayristirilamadi.")
+        print(f"{SEP}\n")
+        return False
+
+    # ── 5. Zorunlu Alan Kontrolü ─────────────────────────────────────────────
+    missing = [f for f in REQUIRED_FIELDS if f not in data]
+    if missing:
+        print(f"[FAIL] Yanıtta eksik alanlar var: {missing}")
+        print(f"{SEP}\n")
+        return False
+
+    # ── 6. Başarı Raporu ─────────────────────────────────────────────────────
+    print(f"\n  Test IP  : {data.get('ip', 'N/A')}")
+    print(f"  Ülke     : {data.get('country', 'N/A')}")
+    print(f"  Şehir    : {data.get('city', 'N/A')}")
+    print(f"  Bölge    : {data.get('region', 'N/A')}")
+    print(f"  Konum    : {data.get('loc', 'N/A')}")
+    print(f"  Org      : {data.get('org', 'N/A')}")
+    print(f"  Zaman D. : {data.get('timezone', 'N/A')}")
+
+    print(f"\n{SEP}")
+    print("  IPINFO SERVICE READY")
+    print(f"  Token Loaded : YES")
+    print(f"  API Status   : OK")
+    print(f"{SEP}\n")
+    return True
+
+
 # ─── Doğrudan Çalıştırma ─────────────────────────────────────────────────────
 if __name__ == "__main__":
-    test_ipinfo_service("8.8.8.8")
+    verify_ipinfo_service("8.8.8.8")
