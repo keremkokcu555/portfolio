@@ -116,8 +116,11 @@ def analytics_dashboard():
         
         return jsonify(data)
     except Exception as e:
-        print(f"Dashboard error: {e}")
-        return jsonify({'error': 'Veri alınamadı'}), 500
+        import traceback as _tb
+        full_tb = _tb.format_exc()
+        print(f"[ANALYTICS DASHBOARD ERROR] range={request.args.get('range')} | {type(e).__name__}: {e}")
+        print(full_tb)
+        return jsonify({'error': 'Veri alınamadı', 'detail': str(e), 'type': type(e).__name__}), 500
 
 
 @analytics_bp.route('/api/analytics/health', methods=['GET'])

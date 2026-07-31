@@ -37,11 +37,24 @@ def ensure_database():
     try:
         cursor.execute("PRAGMA table_info(visitor_analytics)")
         cols = [row[1] for row in cursor.fetchall()]
-        if 'ip_address' not in cols:
-            cursor.execute("ALTER TABLE visitor_analytics ADD COLUMN ip_address TEXT")
+        # All columns that may be missing in older production databases
+        analytics_migrations = [
+            ('ip_address',  'TEXT'),
+            ('country',     'TEXT'),
+            ('region',      'TEXT'),
+            ('city',        'TEXT'),
+            ('loc',         'TEXT'),
+            ('org',         'TEXT'),
+            ('timezone',    'TEXT'),
+            ('postal',      'TEXT'),
+            ('network_type','TEXT DEFAULT \'Unknown\''),
+        ]
+        for col_name, col_def in analytics_migrations:
+            if col_name not in cols:
+                cursor.execute(f"ALTER TABLE visitor_analytics ADD COLUMN {col_name} {col_def}")
     except Exception:
         pass
-    # Ensure new timestamp columns exist on existing tables
+
     tables_with_timestamps = [
         'education', 'courses', 'certificates',
         'experiences', 'projects', 'skills', 'languages'
@@ -58,14 +71,6 @@ def ensure_database():
             # ignore if table doesn't exist yet
             pass
 
-    # Ensure network_type exists in visitor_analytics
-    try:
-        cursor.execute("PRAGMA table_info(visitor_analytics)")
-        cols = [row[1] for row in cursor.fetchall()]
-        if 'network_type' not in cols:
-            cursor.execute("ALTER TABLE visitor_analytics ADD COLUMN network_type TEXT DEFAULT 'Unknown'")
-    except Exception:
-        pass
 
     # Ensure default analytics settings row exists
     try:
