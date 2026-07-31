@@ -1005,10 +1005,7 @@ const loadRecentVisits = async () => {
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const maskIp = (ip) => {
       if (!ip) return '—';
-      const p = ip.split('.');
-      if (p.length === 4) return p[0] + '.' + p[1] + '.***.***';
-      const p6 = ip.split(':');
-      return (p6.length >= 2) ? (p6[0] + ':' + p6[1] + ':***:***') : '***';
+      return ip;
     };
     tbody.innerHTML = data.map(r => {
       const flag = r.country

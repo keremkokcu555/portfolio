@@ -426,7 +426,7 @@ def get_recent_visits(limit: int = 20) -> list:
     db = get_db()
     rows = db.execute(
         """SELECT visited_at, path, device_type, browser, os, referrer, ip_address,
-                  country, region, city, loc, org, timezone, postal
+                  country, region, city, loc, org, timezone, postal, network_type
            FROM visitor_analytics
            ORDER BY id DESC
            LIMIT ?""",
