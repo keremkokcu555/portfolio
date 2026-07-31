@@ -1113,7 +1113,6 @@ const loadLikes = async () => {
   }
 };
 
-initAdmin();
 
 
 // Removed custom blog methods because they are handled globally now
