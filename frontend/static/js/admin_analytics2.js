@@ -159,9 +159,6 @@ window.pruneAnalytics2 = async () => {
   }
 };
 
-const loadLikes = async () => {
-
-
 document.addEventListener("DOMContentLoaded", () => {
   setTimeout(() => {
     if (document.getElementById("an2-today-views")) {
@@ -171,5 +168,18 @@ document.addEventListener("DOMContentLoaded", () => {
       loadRecentVisits2();
     }
   }, 500);
+});
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.querySelector('[data-target="analytics2"]');
+  if (btn) {
+    btn.addEventListener("click", () => {
+      loadAnalyticsSummary2();
+      loadDailyStats2(7);
+      loadAnalyticsBreakdown2();
+      loadRecentVisits2();
+    });
+  }
 });
 
