@@ -238,6 +238,30 @@ CREATE INDEX IF NOT EXISTS idx_blog_views_post_id ON blog_views(blog_post_id);
 CREATE INDEX IF NOT EXISTS idx_blog_views_dedup ON blog_views(blog_post_id, visitor_hash, viewed_at);
 '''
 
+ANALYTICS_SETTINGS_SCHEMA = '''
+CREATE TABLE IF NOT EXISTS analytics_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    analytics_active INTEGER DEFAULT 1,
+    count_admin INTEGER DEFAULT 0,
+    count_localhost INTEGER DEFAULT 0,
+    count_bots INTEGER DEFAULT 0,
+    mask_ips_ui INTEGER DEFAULT 1,
+    show_network_type INTEGER DEFAULT 1,
+    cache_seconds INTEGER DEFAULT 15,
+    refresh_interval INTEGER DEFAULT 60,
+    retention_days INTEGER DEFAULT 90
+);
+'''
+
+ANALYTICS_EXCLUDED_IPS_SCHEMA = '''
+CREATE TABLE IF NOT EXISTS analytics_excluded_ips (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip TEXT UNIQUE NOT NULL,
+    note TEXT,
+    created_at TEXT DEFAULT (datetime('now', 'localtime'))
+);
+'''
+
 SCHEMA_SQL = (
     PROFILE_SCHEMA
     + EDUCATION_SCHEMA
@@ -256,6 +280,8 @@ SCHEMA_SQL = (
     + BLOG_POST_LIKES_SCHEMA
     + BLOG_COMMENT_LIKES_SCHEMA
     + BLOG_VIEWS_SCHEMA
+    + ANALYTICS_SETTINGS_SCHEMA
+    + ANALYTICS_EXCLUDED_IPS_SCHEMA
 )
 
 REQUIRED_FIELDS = {

@@ -49,6 +49,13 @@ app.register_blueprint(comment_bp, url_prefix='/api')
 app.teardown_appcontext(close_db)
 ensure_database()
 
+# IPinfo kolon migrasyonu — tablo yoksa veya kolon eksikse tamamlar
+try:
+    from services.analytics_service import ensure_ipinfo_columns
+    ensure_ipinfo_columns()
+except Exception:
+    pass  # Migration hata verse bile uygulama açılmaya devam eder
+
 # CSRF Token Injection & Validation
 @app.before_request
 def csrf_protect():

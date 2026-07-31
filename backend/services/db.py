@@ -57,6 +57,35 @@ def ensure_database():
         except Exception:
             # ignore if table doesn't exist yet
             pass
+
+    # Ensure network_type exists in visitor_analytics
+    try:
+        cursor.execute("PRAGMA table_info(visitor_analytics)")
+        cols = [row[1] for row in cursor.fetchall()]
+        if 'network_type' not in cols:
+            cursor.execute("ALTER TABLE visitor_analytics ADD COLUMN network_type TEXT DEFAULT 'Unknown'")
+    except Exception:
+        pass
+
+    # Ensure default analytics settings row exists
+    try:
+        cursor.execute('SELECT COUNT(*) FROM analytics_settings')
+        count = cursor.fetchone()[0]
+        if count == 0:
+            cursor.execute('INSERT INTO analytics_settings (id) VALUES (1)')
+    except Exception:
+        pass
+
+    # Ensure new columns exist in analytics_settings
+    try:
+        cursor.execute("PRAGMA table_info(analytics_settings)")
+        cols = [row[1] for row in cursor.fetchall()]
+        if 'analytics_active' not in cols:
+            cursor.execute("ALTER TABLE analytics_settings ADD COLUMN analytics_active INTEGER DEFAULT 1")
+        if 'show_network_type' not in cols:
+            cursor.execute("ALTER TABLE analytics_settings ADD COLUMN show_network_type INTEGER DEFAULT 1")
+    except Exception:
+        pass
     conn.commit()
     conn.close()
 

@@ -1060,6 +1060,20 @@ window.handleCommentGoogleLogin = async (response) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Navbar scroll effect
+    const navbar = document.querySelector('.visitor-navbar');
+    if (navbar) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+        // Initial check
+        if (window.scrollY > 50) navbar.classList.add('scrolled');
+    }
+
     if (window.BLOG_SLUG) {
         if (window.PREVIEW_MODE) {
             const listEl = document.getElementById('comments-list');

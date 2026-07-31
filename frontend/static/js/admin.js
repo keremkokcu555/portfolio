@@ -32,10 +32,11 @@ const activateTab = (target) => {
   document.body.classList.toggle('home-active', target === 'home');
 
   if (target === 'analytics') {
-    loadAnalyticsSummary();
-    loadDailyStats(7);
-    loadAnalyticsBreakdown();
-    loadRecentVisits();
+    const filter = document.getElementById('analytics-filter');
+    const range = filter ? filter.value : '30days';
+    if (typeof DashboardCharts !== 'undefined') {
+        DashboardCharts.load(range);
+    }
   } else if (target === 'likes') {
     loadLikes();
   }
@@ -906,8 +907,15 @@ const loadAnalyticsSummary = async () => {
     if (elWeekV) elWeekV.textContent = data.week_views;
     if (elMonthV) elMonthV.textContent = data.month_views;
     if (elTotalV) elTotalV.textContent = data.total_views;
+
+    const elCountry = document.getElementById('an-country-count');
+    const elCity    = document.getElementById('an-city-count');
+    const elOrg     = document.getElementById('an-org-count');
+    if (elCountry) elCountry.textContent = (data.country_count != null) ? data.country_count : '—';
+    if (elCity)    elCity.textContent    = (data.city_count    != null) ? data.city_count    : '—';
+    if (elOrg)     elOrg.textContent     = (data.org_count     != null) ? data.org_count     : '—';
   } catch (e) {
-    console.error('Analytics summary yüklenemedi:', e);
+    console.error('Analytics summary yüklene medi:', e);
   }
 };
 
@@ -984,30 +992,58 @@ const loadAnalyticsBreakdown = async () => {
 const loadRecentVisits = async () => {
   const tbody = document.getElementById('an-recent-body');
   if (!tbody) return;
+  const EMPTY = '<tr><td colspan="7" style="text-align:center;padding:18px;color:#64748b;">Henüz ziyaretçi verisi bulunmuyor.</td></tr>';
   try {
-    const data = await fetchJson(`${apiBase}/analytics/recent?limit=20`);
-    if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:12px; color:#64748b;">Henüz ziyaret yok.</td></tr>';
-      return;
-    }
+    const data = await fetchJson(`${apiBase}/analytics/recent?limit=30`);
+    if (!data || data.length === 0) { tbody.innerHTML = EMPTY; return; }
     const fmt = (iso) => {
+      if (!iso) return '—';
       const d = new Date(iso + 'Z');
-      return isNaN(d) ? iso : d.toLocaleString('tr-TR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      return isNaN(d) ? iso : d.toLocaleString('tr-TR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
     };
-    const escapeHtml = (unsafe) => (unsafe || '').toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    
-    tbody.innerHTML = data.map(r => `
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:5px 8px; white-space:nowrap;">${fmt(r.visited_at)}</td>
-        <td style="padding:5px 8px;">${escapeHtml(r.ip_address || 'Bilinmiyor')}</td>
-        <td style="padding:5px 8px;">${escapeHtml(r.device_type)}</td>
-        <td style="padding:5px 8px;">${escapeHtml(r.browser)}</td>
-        <td style="padding:5px 8px;">${escapeHtml(r.os)}</td>
-        <td style="padding:5px 8px; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(r.referrer)}">${escapeHtml(r.referrer)}</td>
-      </tr>
-    `).join('');
+    const esc = (s) => (s || '').toString()
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const maskIp = (ip) => {
+      if (!ip) return '—';
+      const p = ip.split('.');
+      if (p.length === 4) return p[0] + '.' + p[1] + '.***.***';
+      const p6 = ip.split(':');
+      return (p6.length >= 2) ? (p6[0] + ':' + p6[1] + ':***:***') : '***';
+    };
+    tbody.innerHTML = data.map(r => {
+      const flag = r.country
+        ? ('<img src="https://flagcdn.com/16x12/' + esc(r.country.toLowerCase()) +
+           '.png" width="16" height="12" style="border-radius:2px;vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'">')
+        : '';
+      const countryCell = r.country
+        ? (flag + esc(r.country))
+        : '<span style="color:#475569">—</span>';
+      return (
+        '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">' +
+        '<td style="padding:5px 8px;white-space:nowrap;color:#94a3b8;font-size:0.8em;">' + fmt(r.visited_at) + '</td>' +
+        '<td style="padding:5px 8px;font-family:monospace;font-size:0.82em;color:#7dd3fc;">' + maskIp(r.ip_address) + '</td>' +
+        '<td style="padding:5px 8px;">' + countryCell + '</td>' +
+        '<td style="padding:5px 8px;">' + (esc(r.city) || '<span style="color:#475569">—</span>') + '</td>' +
+        '<td style="padding:5px 8px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(r.org) + '">' +
+          (esc(r.org) || '<span style="color:#475569">—</span>') + '</td>' +
+        '<td style="padding:5px 8px;">' + (esc(r.browser) || '—') + '</td>' +
+        '<td style="padding:5px 8px;">' + (esc(r.os) || '—') + '</td>' +
+        '</tr>'
+      );
+    }).join('');
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:12px; color:#f87171;">Hata oluştu.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:12px;color:#f87171;">Veri yüklenemedi.</td></tr>';
+  }
+};
+
+const loadGeoBreakdown = async () => {
+  try {
+    const data = await fetchJson(`${apiBase}/analytics/geo`);
+    renderBars('an-country-bars', data.country);
+    renderBars('an-city-bars',    data.city);
+    renderBars('an-org-bars',     data.org);
+  } catch (e) {
+    console.error('Geo breakdown yüklenemedi:', e);
   }
 };
 
@@ -1202,3 +1238,146 @@ activateTab = (target) => {
     loadAdminComments();
   }
 };
+
+
+// ── ANALYTICS SETTINGS & HEALTH LOGIC ──
+
+async function loadSettingsData() {
+    try {
+        const res = await fetch('/api/analytics/settings');
+        if(!res.ok) return;
+        const data = await res.json();
+        const s = data.settings;
+        
+        document.getElementById('set-active').checked = s.analytics_active === 1;
+        document.getElementById('set-admin').checked = s.count_admin === 1;
+        document.getElementById('set-local').checked = s.count_localhost === 1;
+        document.getElementById('set-bot').checked = s.count_bots === 1;
+        document.getElementById('set-mask').checked = s.mask_ips_ui === 1;
+        document.getElementById('set-network').checked = s.show_network_type === 1;
+        
+        document.getElementById('set-cache').value = s.cache_seconds || 15;
+        document.getElementById('set-refresh').value = s.refresh_interval || 60;
+        document.getElementById('set-retention').value = s.retention_days || 90;
+        
+        renderExcludedIps(data.excluded_ips || []);
+    } catch (e) { console.error('Settings load error:', e); }
+}
+
+async function saveSettings() {
+    const payload = {
+        analytics_active: document.getElementById('set-active').checked ? 1 : 0,
+        count_admin: document.getElementById('set-admin').checked ? 1 : 0,
+        count_localhost: document.getElementById('set-local').checked ? 1 : 0,
+        count_bots: document.getElementById('set-bot').checked ? 1 : 0,
+        mask_ips_ui: document.getElementById('set-mask').checked ? 1 : 0,
+        show_network_type: document.getElementById('set-network').checked ? 1 : 0,
+        cache_seconds: parseInt(document.getElementById('set-cache').value) || 15,
+        refresh_interval: parseInt(document.getElementById('set-refresh').value) || 60,
+        retention_days: parseInt(document.getElementById('set-retention').value) || 90
+    };
+    
+    try {
+        const res = await fetch('/api/analytics/settings', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if(res.ok) {
+            alert('Ayarlar kaydedildi!');
+            document.getElementById('settings-modal').style.display = 'none';
+            if (window.DashboardCharts) window.DashboardCharts.load(); // Refresh dashboard
+        }
+    } catch (e) { console.error('Save settings error:', e); alert('Hata oluştu'); }
+}
+
+function renderExcludedIps(ips) {
+    const tbody = document.getElementById('excluded-ips-body');
+    if(!tbody) return;
+    if(ips.length === 0) {
+        tbody.innerHTML = '<tr><td style="padding:8px; color:#64748b; text-align:center;">Liste boş.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = ips.map(ip => `
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:8px; font-family:monospace; color:#7dd3fc;">${escapeHtml(ip.ip)}</td>
+            <td style="padding:8px; color:#94a3b8;">${escapeHtml(ip.note || '')}</td>
+            <td style="padding:8px; text-align:right;">
+                <button onclick="deleteExcludedIp('${escapeHtml(ip.ip)}')" style="background:transparent; color:#f87171; border:none; cursor:pointer;">Sil</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+async function addExcludedIp() {
+    const ipInput = document.getElementById('exc-ip-val');
+    const noteInput = document.getElementById('exc-ip-note');
+    const ip = (ipInput.value || '').trim();
+    const note = (noteInput.value || '').trim();
+    if(!ip) return alert('IP adresi girin');
+    
+    try {
+        const res = await fetch('/api/analytics/excluded_ips', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ip, note})
+        });
+        if(res.ok) {
+            ipInput.value = ''; noteInput.value = '';
+            loadSettingsData(); // Refresh list
+        }
+    } catch(e) { console.error('Add IP error', e); }
+}
+
+async function deleteExcludedIp(ip) {
+    if(!confirm(`${ip} silinsin mi?`)) return;
+    try {
+        const res = await fetch('/api/analytics/excluded_ips', {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ip})
+        });
+        if(res.ok) loadSettingsData(); // Refresh list
+    } catch(e) { console.error('Delete IP error', e); }
+}
+
+async function loadHealthData() {
+    const container = document.getElementById('health-content');
+    container.innerHTML = '<div style="color:#94a3b8; text-align:center;">Sağlık durumu yükleniyor...</div>';
+    try {
+        const res = await fetch('/api/analytics/health');
+        if(!res.ok) throw new Error('API Error');
+        const d = await res.json();
+        
+        const badge = (status) => {
+            const ok = (status === 'connected' || status === 'online' || status === true);
+            return `<span style="background:${ok ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)'}; color:${ok ? '#4ade80' : '#f87171'}; padding:2px 8px; border-radius:4px; font-size:0.85em;">${status}</span>`;
+        };
+        
+        container.innerHTML = `
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span style="color:#cbd5e1;">Analytics Servisi</span> ${badge(d.status)}
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span style="color:#cbd5e1;">Veritabanı (SQLite)</span> ${badge(d.database)}
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span style="color:#cbd5e1;">IPinfo API</span> ${badge(d.ipinfo)}
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span style="color:#cbd5e1;">Dashboard Cache</span> ${badge(d.cache_active)}
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span style="color:#cbd5e1;">Cache TTL (sn)</span> <span style="color:#94a3b8; font-size:0.9em;">${d.cache_ttl}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span style="color:#cbd5e1;">Son Yenilenme</span> <span style="color:#94a3b8; font-size:0.8em;">${new Date(d.last_refresh).toLocaleTimeString()}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0;">
+                <span style="color:#cbd5e1;">Versiyon</span> <span style="background:rgba(59,130,246,0.1); color:#60a5fa; padding:2px 8px; border-radius:4px; font-size:0.85em; font-family:monospace;">${d.analytics_version}</span>
+            </div>
+        `;
+    } catch (e) {
+        container.innerHTML = '<div style="color:#f87171; text-align:center;">Sağlık verisi okunamadı.</div>';
+    }
+}
